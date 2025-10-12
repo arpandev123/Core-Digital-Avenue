@@ -1062,6 +1062,30 @@
             transform-style: preserve-3d;
             animation: rotate 10s linear infinite;
         }
+        .background__box .letter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4rem;
+            height: 4rem;
+            margin: -2rem 0 0 -2rem;
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: bold;
+            text-align: center;
+            line-height: 4rem;
+            backface-visibility: hidden;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .background__box .letter:nth-child(1) { transform: translate(-50%, -50%) rotateY(0deg) translateZ(6rem); }
+        .background__box .letter:nth-child(2) { transform: translate(-50%, -50%) rotateY(120deg) translateZ(6rem); }
+        .background__box .letter:nth-child(3) { transform: translate(-50%, -50%) rotateY(240deg) translateZ(6rem); }
+
+        @keyframes rotate {
+            0% { transform: translate(-50%, -50%) rotateY(0deg) rotateX(0deg); }
+            100% { transform: translate(-50%, -50%) rotateY(360deg) rotateX(360deg); }
+        }
 
         .background__box div {
             position: absolute;
@@ -1116,12 +1140,9 @@
         </div>
         <div class="background__wrap">
             <div class="background__box">
-                <div>C</div>
-                <div>D</div>
-                <div>A</div>
-                <div>C</div>
-                <div>D</div>
-                <div>A</div>
+                <div class="letter">C</div>
+                <div class="letter">D</div>
+                <div class="letter">A</div>
             </div>
         </div>
         <div class="pill-container">
@@ -1921,6 +1942,7 @@
     </script>
 </body>
 </html>
+
 
 
 
