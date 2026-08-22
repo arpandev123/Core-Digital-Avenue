@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Postcard Generator</title>
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <style>
         :root {
             /* Light Yellow Theme */
@@ -39,7 +43,7 @@
 
         h2 {
             margin-top: 0;
-            color: #D4AC0D; /* Slightly darker yellow so the text is readable on white */
+            color: #D4AC0D;
         }
 
         p {
@@ -79,7 +83,7 @@
         button {
             width: 100%;
             background-color: var(--primary-color);
-            color: #333333; /* Dark gray for readability on light yellow */
+            color: #333333; 
             border: none;
             padding: 14px;
             font-size: 1em;
@@ -94,7 +98,7 @@
 
         /* Postcard Preview Styles */
         #preview-section {
-            display: none; /* Hidden by default */
+            display: none; 
             margin-top: 30px;
             padding-top: 30px;
             border-top: 2px dashed #ddd;
@@ -136,7 +140,6 @@
         .success { color: #28a745; }
         .error { color: #dc3545; }
         .loading { color: #D4AC0D; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -231,7 +234,7 @@
             }
         });
 
-        // Step 2: Send the Postcard via PHP
+        // Step 2: Send the Postcard via EmailJS
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -244,22 +247,26 @@
             statusMessage.textContent = '✉️ Delivering your postcard...';
 
             try {
+                // 1. Initialize EmailJS with your Public Key
+                // REPLACE THIS STRING WITH YOUR ACTUAL PUBLIC KEY
+                emailjs.init("nERbog0CqlvyZi4UE");
+
                 const imageUrl = document.getElementById('generated-image').src;
 
-                // Call the local PHP file (UPDATED NAME HERE)
-                const response = await fetch('send_email.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        theme: currentTheme,
-                        imageUrl: imageUrl
-                    })
-                });
+                // 2. Prepare the data to match your EmailJS template variables
+                const templateParams = {
+                    to_email: email,
+                    theme: currentTheme,
+                    image_url: imageUrl
+                };
 
-                if (!response.ok) throw new Error("Failed from server");
+                // 3. Send using EmailJS 
+                // REPLACE THESE STRINGS WITH YOUR ACTUAL SERVICE ID AND TEMPLATE ID
+                await emailjs.send(
+                    "service_kmmyfad",   
+                    "template_wcnazr9",  
+                    templateParams
+                );
 
                 statusMessage.className = 'success';
                 statusMessage.textContent = `✨ Success! Your postcard was delivered to ${email}!`;
@@ -275,7 +282,7 @@
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Failed to send email. Is your PHP server running?';
+                statusMessage.textContent = '❌ Failed to send email. Check your EmailJS keys and setup.';
                 console.error(error);
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'Send Postcard';
