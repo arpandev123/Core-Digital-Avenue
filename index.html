@@ -6,7 +6,7 @@
     <title>AI Postcard Generator</title>
     <style>
         :root {
-            /* Changed to Light Yellow */
+            /* Light Yellow Theme */
             --primary-color: #F7DC6F; 
             --primary-hover: #F4D03F;
             --background-color: #f4f7f6;
@@ -79,7 +79,7 @@
         button {
             width: 100%;
             background-color: var(--primary-color);
-            color: #333333; /* Changed to dark gray for readability on light yellow */
+            color: #333333; /* Dark gray for readability on light yellow */
             border: none;
             padding: 14px;
             font-size: 1em;
@@ -202,10 +202,10 @@
             previewSection.style.display = 'none';
 
             try {
-                // We use a free, public AI image generator URL for the demo
+                // Free, public AI image generator URL for the demo
                 const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme + " postcard illustration")}?width=400&height=300&nologo=true`;
                 
-                // Simulate backend delay for text generation
+                // Simulate delay for text generation
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 
                 // Mock generated text based on the theme
@@ -231,7 +231,7 @@
             }
         });
 
-        // Step 2: Send the Postcard
+        // Step 2: Send the Postcard via PHP
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -244,9 +244,23 @@
             statusMessage.textContent = '✉️ Delivering your postcard...';
 
             try {
-                // Simulate backend email sending delay
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
+                const imageUrl = document.getElementById('generated-image').src;
+
+                // Call the local PHP file
+                const response = await fetch('send-postcard.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        theme: currentTheme,
+                        imageUrl: imageUrl
+                    })
+                });
+
+                if (!response.ok) throw new Error("Failed from server");
+
                 statusMessage.className = 'success';
                 statusMessage.textContent = `✨ Success! Your postcard was delivered to ${email}!`;
                 
@@ -261,7 +275,8 @@
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Failed to send email.';
+                statusMessage.textContent = '❌ Failed to send email. Is your PHP server running?';
+                console.error(error);
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'Send Postcard';
             }
