@@ -246,8 +246,8 @@
             try {
                 const imageUrl = document.getElementById('generated-image').src;
 
-                // Call the local PHP file
-                const response = await fetch('send-postcard.php', {
+                // Call the local PHP file (UPDATED NAME HERE)
+                const response = await fetch('send_email.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
