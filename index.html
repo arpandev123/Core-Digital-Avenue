@@ -41,16 +41,8 @@
             text-align: center;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #D4AC0D;
-        }
-
-        p {
-            font-size: 0.95em;
-            color: #666;
-            margin-bottom: 25px;
-        }
+        h2 { margin-top: 0; color: #D4AC0D; }
+        p { font-size: 0.95em; color: #666; margin-bottom: 25px; }
 
         .form-group {
             margin-bottom: 20px;
@@ -64,8 +56,7 @@
             font-size: 0.9em;
         }
 
-        input[type="text"],
-        input[type="email"] {
+        input[type="text"], input[type="email"], input[type="tel"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -75,10 +66,7 @@
             transition: border-color 0.3s;
         }
 
-        input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
+        input:focus { border-color: var(--primary-color); outline: none; }
 
         button {
             width: 100%;
@@ -114,27 +102,43 @@
         }
 
         .postcard-preview img {
-            width: 100%;
-            height: auto;
-            display: block;
-            background-color: #eee;
-            min-height: 250px;
+            width: 100%; height: auto; display: block;
+            background-color: #eee; min-height: 250px;
         }
 
-        .postcard-text {
-            padding: 20px;
-            font-style: italic;
-            color: #444;
-            background-image: repeating-linear-gradient(transparent, transparent 29px, #eee 30px);
-            line-height: 30px;
-            text-align: left;
+        /* Checkbox & Dynamic UI Styles */
+        .checkbox-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            background: #fffdf5;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f2e29e;
         }
 
-        #status-message {
-            margin-top: 20px;
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
             font-weight: bold;
-            font-size: 0.9em;
-            min-height: 20px;
+            cursor: pointer;
+            margin: 0;
+            color: #333;
+        }
+
+        .checkbox-group input {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #D4AC0D;
+        }
+
+        .hidden { display: none !important; }
+        
+        #status-message {
+            margin-top: 20px; font-weight: bold; font-size: 0.9em; min-height: 20px;
         }
 
         .success { color: #28a745; }
@@ -146,7 +150,7 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Step 1: Enter a theme to generate your postcard artwork and message.</p>
+        <p>Step 1: Enter a theme to generate your postcard artwork.</p>
 
         <!-- Step 1: Generate Postcard -->
         <form id="generateForm">
@@ -165,67 +169,113 @@
             
             <div class="postcard-preview">
                 <img id="generated-image" src="" alt="Generated Postcard Art">
-                <div class="postcard-text" id="generated-text">
-                    <!-- Text goes here -->
-                </div>
             </div>
 
-            <p style="margin-bottom: 15px; font-weight: bold;">Looks good? Send it now!</p>
+            <p style="margin-bottom: 15px; font-weight: bold;">How would you like to send this?</p>
 
             <form id="sendForm">
-                <div class="form-group">
-                    <label for="email">Recipient's Email</label>
-                    <input type="email" id="email" placeholder="friend@example.com" required>
+                
+                <!-- The User Choice Checkboxes -->
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="checkEmail" checked> 📧 Email
+                    </label>
+                    <label>
+                        <input type="checkbox" id="checkText"> 📱 Text
+                    </label>
                 </div>
-                <button type="submit" id="sendBtn">Send Postcard</button>
+
+                <!-- Dynamic Email Input -->
+                <div class="form-group" id="emailGroup">
+                    <label for="email">Recipient's Email</label>
+                    <input type="email" id="email" placeholder="friend@example.com">
+                </div>
+
+                <!-- Dynamic Phone Input -->
+                <div class="form-group hidden" id="phoneGroup">
+                    <label for="phone">Recipient's Phone Number</label>
+                    <input type="tel" id="phone" placeholder="e.g. 0412 345 678">
+                </div>
+
+                <button type="submit" id="sendBtn">Send Email</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Form & UI Elements
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
         const statusMessage = document.getElementById('status-message');
         
+        const checkEmail = document.getElementById('checkEmail');
+        const checkText = document.getElementById('checkText');
+        const emailGroup = document.getElementById('emailGroup');
+        const phoneGroup = document.getElementById('phoneGroup');
+        const sendBtn = document.getElementById('sendBtn');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+
         let currentTheme = "";
 
-        // Step 1: Generate the Preview
+        // --- DYNAMIC UI LOGIC ---
+        // This function updates the inputs and button text based on checkboxes
+        function updateFormUI() {
+            // Show/hide fields
+            emailGroup.classList.toggle('hidden', !checkEmail.checked);
+            phoneGroup.classList.toggle('hidden', !checkText.checked);
+            
+            // Set required fields based on selection
+            emailInput.required = checkEmail.checked;
+            phoneInput.required = checkText.checked;
+            
+            // Update the button text
+            if (checkEmail.checked && checkText.checked) {
+                sendBtn.textContent = 'Send Email & Text';
+                sendBtn.disabled = false;
+            } else if (checkEmail.checked) {
+                sendBtn.textContent = 'Send Email';
+                sendBtn.disabled = false;
+            } else if (checkText.checked) {
+                sendBtn.textContent = 'Send Text';
+                sendBtn.disabled = false;
+            } else {
+                sendBtn.textContent = 'Select an option above';
+                sendBtn.disabled = true;
+            }
+        }
+
+        // Listen for checkbox clicks
+        checkEmail.addEventListener('change', updateFormUI);
+        checkText.addEventListener('change', updateFormUI);
+
+        // --- STEP 1: GENERATE ---
         generateForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             currentTheme = document.getElementById('theme').value;
             const generateBtn = document.getElementById('generateBtn');
 
-            // UI Loading state
             generateBtn.disabled = true;
-            generateBtn.textContent = 'Generating Art & Text...';
+            generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
             statusMessage.textContent = '🎨 Painting your masterpiece...';
             previewSection.style.display = 'none';
 
             try {
-                // Free, public AI image generator URL for the demo
                 const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme + " postcard illustration")}?width=400&height=300&nologo=true`;
                 
-                // Simulate delay for text generation
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
-                // Mock generated text based on the theme
-                const mockGeneratedText = `Greetings! I hope this postcard finds you well. I couldn't resist sending you this beautiful view of ${currentTheme}. Wish you were here to see it!`;
-
-                // Update the DOM with generated content
                 document.getElementById('generated-image').src = imageUrl;
-                document.getElementById('generated-text').textContent = mockGeneratedText;
 
-                // Wait for image to load before showing preview
                 document.getElementById('generated-image').onload = () => {
                     statusMessage.textContent = '';
                     previewSection.style.display = 'block';
                     generateBtn.disabled = false;
                     generateBtn.textContent = 'Generate New Postcard';
                 };
-
             } catch (error) {
                 statusMessage.className = 'error';
                 statusMessage.textContent = '❌ Failed to generate postcard.';
@@ -234,58 +284,66 @@
             }
         });
 
-        // Step 2: Send the Postcard via EmailJS
+        // --- STEP 2: SEND EMAIL, TEXT, OR BOTH ---
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const sendBtn = document.getElementById('sendBtn');
-
             sendBtn.disabled = true;
             sendBtn.textContent = 'Sending...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '✉️ Delivering your postcard...';
+            
+            const imageUrl = document.getElementById('generated-image').src;
+            let successMessage = "";
 
             try {
-                // 1. Initialize EmailJS with your Public Key
-                // REPLACE THIS STRING WITH YOUR ACTUAL PUBLIC KEY
-                emailjs.init("nERbog0CqlvyZi4UE");
+                // ACTION A: Send Email via EmailJS
+                if (checkEmail.checked) {
+                    statusMessage.textContent = '✉️ Delivering email...';
+                    
+                    // REPLACE THESE WITH YOUR KEYS!
+                    emailjs.init(nERbog0CqlvyZi4UE);
+                    await emailjs.send(service_kmmyfad, template_wcnazr9, {
+                        to_email: emailInput.value,
+                        theme: currentTheme,
+                        image_url: imageUrl
+                    });
+                    
+                    successMessage += `✨ Email sent to ${emailInput.value}! `;
+                }
 
-                const imageUrl = document.getElementById('generated-image').src;
+                // ACTION B: Send Text via Native SMS App
+                if (checkText.checked) {
+                    const phone = phoneInput.value;
+                    const smsBody = `I made a digital postcard about "${currentTheme}" for you! View it here: ${imageUrl}`;
+                    
+                    // This launches the phone's native texting app
+                    const smsUrl = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
+                    
+                    // Small delay to ensure EmailJS finishes before opening the texting app
+                    setTimeout(() => {
+                        window.location.href = smsUrl;
+                    }, 500);
 
-                // 2. Prepare the data to match your EmailJS template variables
-                const templateParams = {
-                    to_email: email,
-                    theme: currentTheme,
-                    image_url: imageUrl
-                };
+                    successMessage += `📱 Text message app opened!`;
+                }
 
-                // 3. Send using EmailJS 
-                // REPLACE THESE STRINGS WITH YOUR ACTUAL SERVICE ID AND TEMPLATE ID
-                await emailjs.send(
-                    "service_kmmyfad",   
-                    "template_wcnazr9",  
-                    templateParams
-                );
-
+                // Reset Success UI
                 statusMessage.className = 'success';
-                statusMessage.textContent = `✨ Success! Your postcard was delivered to ${email}!`;
+                statusMessage.textContent = successMessage;
                 
-                // Reset form
-                sendForm.reset();
                 setTimeout(() => {
+                    sendForm.reset();
+                    updateFormUI(); // Reset UI back to default state
                     previewSection.style.display = 'none';
                     document.getElementById('theme').value = '';
                     statusMessage.textContent = '';
-                    document.getElementById('generateBtn').textContent = 'Generate Postcard';
                 }, 4000);
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Failed to send email. Check your EmailJS keys and setup.';
+                statusMessage.textContent = '❌ Something went wrong. Check your EmailJS setup.';
                 console.error(error);
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Send Postcard';
+                updateFormUI(); // Re-enable button
             }
         });
     </script>
