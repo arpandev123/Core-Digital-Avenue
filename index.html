@@ -301,8 +301,8 @@
                     statusMessage.textContent = '✉️ Delivering email...';
                     
                     // REPLACE THESE WITH YOUR KEYS!
-                    emailjs.init(nERbog0CqlvyZi4UE);
-                    await emailjs.send(service_kmmyfad, template_wcnazr9, {
+                    emailjs.init("nERbog0CqlvyZi4UE");
+                    await emailjs.send("service_kmmyfad", "template_wcnazr9", {
                         to_email: emailInput.value,
                         theme: currentTheme,
                         image_url: imageUrl
