@@ -10,7 +10,6 @@
     
     <style>
         :root {
-            /* Light Yellow Theme */
             --primary-color: #F7DC6F; 
             --primary-hover: #F4D03F;
             --background-color: #f4f7f6;
@@ -84,7 +83,6 @@
         button:hover { background-color: var(--primary-hover); }
         button:disabled { background-color: #FCF3CF; color: #999; cursor: not-allowed; }
 
-        /* Postcard Preview Styles */
         #preview-section {
             display: none; 
             margin-top: 30px;
@@ -109,11 +107,11 @@
         /* Checkbox & Dynamic UI Styles */
         .checkbox-group {
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            justify-content: space-around;
+            gap: 10px;
             margin-bottom: 20px;
             background: #fffdf5;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #f2e29e;
         }
@@ -124,13 +122,14 @@
             font-weight: bold;
             cursor: pointer;
             margin: 0;
+            font-size: 0.85em;
             color: #333;
         }
 
         .checkbox-group input {
-            margin-right: 8px;
-            width: 18px;
-            height: 18px;
+            margin-right: 5px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
             accent-color: #D4AC0D;
         }
@@ -171,18 +170,15 @@
                 <img id="generated-image" src="" alt="Generated Postcard Art">
             </div>
 
-            <p style="margin-bottom: 15px; font-weight: bold;">How would you like to send this?</p>
+            <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
 
             <form id="sendForm">
                 
                 <!-- The User Choice Checkboxes -->
                 <div class="checkbox-group">
-                    <label>
-                        <input type="checkbox" id="checkEmail" checked> 📧 Email
-                    </label>
-                    <label>
-                        <input type="checkbox" id="checkText"> 📱 Text
-                    </label>
+                    <label><input type="checkbox" id="checkEmail" checked> 📧 Email</label>
+                    <label><input type="checkbox" id="checkText"> 📱 SMS</label>
+                    <label><input type="checkbox" id="checkWhatsapp"> 💬 WhatsApp</label>
                 </div>
 
                 <!-- Dynamic Email Input -->
@@ -191,19 +187,24 @@
                     <input type="email" id="email" placeholder="friend@example.com">
                 </div>
 
-                <!-- Dynamic Phone Input -->
+                <!-- Dynamic Phone Input (for SMS) -->
                 <div class="form-group hidden" id="phoneGroup">
-                    <label for="phone">Recipient's Phone Number</label>
+                    <label for="phone">Recipient's Phone (SMS)</label>
                     <input type="tel" id="phone" placeholder="e.g. 0412 345 678">
                 </div>
 
-                <button type="submit" id="sendBtn">Send Email</button>
+                <!-- Dynamic WhatsApp Input -->
+                <div class="form-group hidden" id="whatsappGroup">
+                    <label for="whatsappPhone">Recipient's WhatsApp Number</label>
+                    <input type="tel" id="whatsappPhone" placeholder="e.g. +61412345678 (include country code)">
+                </div>
+
+                <button type="submit" id="sendBtn">Send Postcard</button>
             </form>
         </div>
     </div>
 
     <script>
-        // Form & UI Elements
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -211,49 +212,52 @@
         
         const checkEmail = document.getElementById('checkEmail');
         const checkText = document.getElementById('checkText');
+        const checkWhatsapp = document.getElementById('checkWhatsapp');
+        
         const emailGroup = document.getElementById('emailGroup');
         const phoneGroup = document.getElementById('phoneGroup');
+        const whatsappGroup = document.getElementById('whatsappGroup');
+        
         const sendBtn = document.getElementById('sendBtn');
         const emailInput = document.getElementById('email');
         const phoneInput = document.getElementById('phone');
+        const whatsappInput = document.getElementById('whatsappPhone');
 
         let currentTheme = "";
 
         // --- DYNAMIC UI LOGIC ---
-        // This function updates the inputs and button text based on checkboxes
         function updateFormUI() {
-            // Show/hide fields
             emailGroup.classList.toggle('hidden', !checkEmail.checked);
             phoneGroup.classList.toggle('hidden', !checkText.checked);
+            whatsappGroup.classList.toggle('hidden', !checkWhatsapp.checked);
             
-            // Set required fields based on selection
             emailInput.required = checkEmail.checked;
             phoneInput.required = checkText.checked;
+            whatsappInput.required = checkWhatsapp.checked;
             
-            // Update the button text
-            if (checkEmail.checked && checkText.checked) {
-                sendBtn.textContent = 'Send Email & Text';
-                sendBtn.disabled = false;
-            } else if (checkEmail.checked) {
-                sendBtn.textContent = 'Send Email';
-                sendBtn.disabled = false;
-            } else if (checkText.checked) {
-                sendBtn.textContent = 'Send Text';
-                sendBtn.disabled = false;
-            } else {
+            const activeCount = [checkEmail.checked, checkText.checked, checkWhatsapp.checked].filter(Boolean).length;
+            
+            if (activeCount === 0) {
                 sendBtn.textContent = 'Select an option above';
                 sendBtn.disabled = true;
+            } else if (activeCount > 1) {
+                sendBtn.textContent = 'Send via Multiple Channels';
+                sendBtn.disabled = false;
+            } else {
+                if (checkEmail.checked) sendBtn.textContent = 'Send Email';
+                if (checkText.checked) sendBtn.textContent = 'Send SMS';
+                if (checkWhatsapp.checked) sendBtn.textContent = 'Share via WhatsApp';
+                sendBtn.disabled = false;
             }
         }
 
-        // Listen for checkbox clicks
         checkEmail.addEventListener('change', updateFormUI);
         checkText.addEventListener('change', updateFormUI);
+        checkWhatsapp.addEventListener('change', updateFormUI);
 
         // --- STEP 1: GENERATE ---
         generateForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             currentTheme = document.getElementById('theme').value;
             const generateBtn = document.getElementById('generateBtn');
 
@@ -265,7 +269,6 @@
 
             try {
                 const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme + " postcard illustration")}?width=400&height=300&nologo=true`;
-                
                 await new Promise(resolve => setTimeout(resolve, 1500));
                 
                 document.getElementById('generated-image').src = imageUrl;
@@ -284,19 +287,20 @@
             }
         });
 
-        // --- STEP 2: SEND EMAIL, TEXT, OR BOTH ---
+        // --- STEP 2: SEND / SHARE ---
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             sendBtn.disabled = true;
-            sendBtn.textContent = 'Sending...';
+            sendBtn.textContent = 'Processing...';
             statusMessage.className = 'loading';
             
             const imageUrl = document.getElementById('generated-image').src;
             let successMessage = "";
+            let whatsappUrlToOpen = null;
+            let smsUrlToOpen = null;
 
             try {
-                // ACTION A: Send Email via EmailJS
+                // 1. Handle EmailJS
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
                     
@@ -308,32 +312,39 @@
                         image_url: imageUrl
                     });
                     
-                    successMessage += `✨ Email sent to ${emailInput.value}! `;
+                    successMessage += `✨ Email sent! `;
                 }
 
-                // ACTION B: Send Text via Native SMS App
+                // 2. Handle Native SMS
                 if (checkText.checked) {
                     const phone = phoneInput.value;
                     const smsBody = `I made a digital postcard about "${currentTheme}" for you! View it here: ${imageUrl}`;
-                    
-                    // This launches the phone's native texting app
-                    const smsUrl = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
-                    
-                    // Small delay to ensure EmailJS finishes before opening the texting app
-                    setTimeout(() => {
-                        window.location.href = smsUrl;
-                    }, 500);
-
-                    successMessage += `📱 Text message app opened!`;
+                    smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
+                    successMessage += `📱 SMS app opened! `;
                 }
 
-                // Reset Success UI
+                // 3. Handle WhatsApp
+                if (checkWhatsapp.checked) {
+                    const waPhone = whatsappInput.value.replace(/\D/g,''); // strip non-digits for API
+                    const waBody = `Hello! I made a digital postcard about "${currentTheme}" for you. View it here: ${imageUrl}`;
+                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(waBody)}`;
+                    successMessage += `💬 WhatsApp ready! `;
+                }
+
                 statusMessage.className = 'success';
-                statusMessage.textContent = successMessage;
+                statusMessage.textContent = successMessage || 'Success!';
                 
+                // Trigger external app redirects safely with small delays
+                if (smsUrlToOpen) {
+                    setTimeout(() => { window.location.href = smsUrlToOpen; }, 400);
+                }
+                if (whatsappUrlToOpen) {
+                    setTimeout(() => { window.open(whatsappUrlToOpen, '_blank'); }, 800);
+                }
+
                 setTimeout(() => {
                     sendForm.reset();
-                    updateFormUI(); // Reset UI back to default state
+                    updateFormUI();
                     previewSection.style.display = 'none';
                     document.getElementById('theme').value = '';
                     statusMessage.textContent = '';
@@ -341,9 +352,9 @@
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Something went wrong. Check your EmailJS setup.';
+                statusMessage.textContent = '❌ Something went wrong. Check your EmailJS settings.';
                 console.error(error);
-                updateFormUI(); // Re-enable button
+                updateFormUI();
             }
         });
     </script>
