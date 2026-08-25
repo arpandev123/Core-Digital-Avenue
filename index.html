@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator</title>
+    <title>AI Postcard Generator with Live Trends</title>
     
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
@@ -36,12 +35,62 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             text-align: center;
         }
 
         h2 { margin-top: 0; color: #D4AC0D; }
-        p { font-size: 0.95em; color: #666; margin-bottom: 25px; }
+        p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
+
+        /* --- TRENDING NEWS TICKER STYLES --- */
+        .trending-box {
+            background: #fffdf0;
+            border: 1px solid #f9e79f;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .trending-header {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #b7950b;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .trend-snippet {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .trend-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .trend-chip {
+            background: #fef9e7;
+            border: 1px solid #f7dc6f;
+            color: #7d6608;
+            padding: 4px 8px;
+            font-size: 0.75em;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trend-chip:hover {
+            background: #f4d03f;
+            color: #fff;
+        }
+        ------------------------------------
 
         .form-group {
             margin-bottom: 20px;
@@ -62,7 +111,6 @@
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 1em;
-            transition: border-color 0.3s;
         }
 
         input:focus { border-color: var(--primary-color); outline: none; }
@@ -104,7 +152,6 @@
             background-color: #eee; min-height: 250px;
         }
 
-        /* Checkbox & Dynamic UI Styles */
         .checkbox-group {
             display: flex;
             justify-content: space-around;
@@ -123,7 +170,6 @@
             cursor: pointer;
             margin: 0;
             font-size: 0.85em;
-            color: #333;
         }
 
         .checkbox-group input {
@@ -135,11 +181,7 @@
         }
 
         .hidden { display: none !important; }
-        
-        #status-message {
-            margin-top: 20px; font-weight: bold; font-size: 0.9em; min-height: 20px;
-        }
-
+        #status-message { margin-top: 20px; font-weight: bold; font-size: 0.9em; min-height: 20px; }
         .success { color: #28a745; }
         .error { color: #dc3545; }
         .loading { color: #D4AC0D; }
@@ -149,20 +191,30 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Step 1: Enter a theme to generate your postcard artwork.</p>
+        <p>Pick a trending social topic below or type your own theme!</p>
 
-        <!-- Step 1: Generate Postcard -->
+        <div class="trending-box">
+            <div class="trending-header">
+                <span>🔥 Live Social Trends</span>
+                <span id="trend-time">Just now</span>
+            </div>
+            <div class="trend-snippet" id="trend-snippet-text">
+                Loading current social pulse...
+            </div>
+            <div class="trend-chips" id="trend-chips-container">
+                </div>
+        </div>
+
         <form id="generateForm">
             <div class="form-group">
-                <label for="theme">Postcard Theme</label>
-                <input type="text" id="theme" placeholder="e.g., A futuristic city at sunset" required>
+                <label for="theme">Postcard Theme / Auto-Prompt</label>
+                <input type="text" id="theme" placeholder="Click a trend above or type custom theme" required>
             </div>
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
 
         <div id="status-message"></div>
 
-        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
             
@@ -173,30 +225,25 @@
             <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
 
             <form id="sendForm">
-                
-                <!-- The User Choice Checkboxes -->
                 <div class="checkbox-group">
                     <label><input type="checkbox" id="checkEmail" checked> 📧 Email</label>
                     <label><input type="checkbox" id="checkText"> 📱 SMS</label>
                     <label><input type="checkbox" id="checkWhatsapp"> 💬 WhatsApp</label>
                 </div>
 
-                <!-- Dynamic Email Input -->
                 <div class="form-group" id="emailGroup">
                     <label for="email">Recipient's Email</label>
                     <input type="email" id="email" placeholder="friend@example.com">
                 </div>
 
-                <!-- Dynamic Phone Input (for SMS) -->
                 <div class="form-group hidden" id="phoneGroup">
                     <label for="phone">Recipient's Phone (SMS)</label>
                     <input type="tel" id="phone" placeholder="e.g. 0412 345 678">
                 </div>
 
-                <!-- Dynamic WhatsApp Input -->
                 <div class="form-group hidden" id="whatsappGroup">
                     <label for="whatsappPhone">Recipient's WhatsApp Number</label>
-                    <input type="tel" id="whatsappPhone" placeholder="e.g. +61412345678 (include country code)">
+                    <input type="tel" id="whatsappPhone" placeholder="e.g. +61412345678">
                 </div>
 
                 <button type="submit" id="sendBtn">Send Postcard</button>
@@ -205,6 +252,59 @@
     </div>
 
     <script>
+        // Simulated or Live Trending Feed Data (Can be linked to an RSS/News API)
+        const trendingTopics = [
+            {
+                tag: "Northern Lights Spectacle",
+                prompt: "A breathtaking vibrant display of the Aurora Borealis over a snowy mountain cabin",
+                snippet: "Social feeds are flooded with rare multi-color aurora sightings visible across unusual latitudes last night."
+            },
+            {
+                tag: "Bioluminescent Beach",
+                prompt: "Glowing blue waves crashing softly onto a tranquil tropical sandy shore at midnight",
+                snippet: "Viral videos show glowing plankton lighting up coastlines, inspiring dream getaway posts."
+            },
+            {
+                tag: "Retro Futuristic City",
+                prompt: "A retro-futuristic 1980s synthwave cityscape with neon lights and flying cars at dusk",
+                snippet: "Nostalgic synthwave aesthetics are trending heavily across design and art communities today."
+            },
+            {
+                tag: "Cozy Autumn Cabin",
+                prompt: "A cozy wooden cabin nestled in a dense orange autumn forest with smoke rising from the chimney",
+                snippet: "Users are sharing aesthetic mood boards focusing on slow living and crisp weather vibes."
+            }
+        ];
+
+        // Load Trends into UI
+        function loadTrends() {
+            const container = document.getElementById('trend-chips-container');
+            const snippetBox = document.getElementById('trend-snippet-text');
+            container.innerHTML = '';
+
+            // Pick a random trend snippet to display initially
+            const randomTrend = trendingTopics[Math.floor(Math.random() * trendingTopics.length)];
+            snippetBox.textContent = `"${randomTrend.snippet}"`;
+
+            trendingTopics.forEach(item => {
+                const chip = document.createElement('div');
+                chip.className = 'trend-chip';
+                chip.textContent = `# ${item.tag}`;
+                chip.onclick = () => {
+                    // Auto-fill the theme box and snippet info
+                    document.getElementById('theme').value = item.prompt;
+                    snippetBox.textContent = `"${item.snippet}"`;
+                    // Optional: auto-trigger generation immediately
+                    document.getElementById('generateForm').requestSubmit();
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        // Initialize trends on page load
+        window.addEventListener('DOMContentLoaded', loadTrends);
+
+        // Standard App Elements
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -225,7 +325,6 @@
 
         let currentTheme = "";
 
-        // --- DYNAMIC UI LOGIC ---
         function updateFormUI() {
             emailGroup.classList.toggle('hidden', !checkEmail.checked);
             phoneGroup.classList.toggle('hidden', !checkText.checked);
@@ -255,7 +354,6 @@
         checkText.addEventListener('change', updateFormUI);
         checkWhatsapp.addEventListener('change', updateFormUI);
 
-        // --- STEP 1: GENERATE ---
         generateForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             currentTheme = document.getElementById('theme').value;
@@ -264,7 +362,7 @@
             generateBtn.disabled = true;
             generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🎨 Painting your masterpiece...';
+            statusMessage.textContent = '🎨 Painting based on current social trend...';
             previewSection.style.display = 'none';
 
             try {
@@ -287,7 +385,6 @@
             }
         });
 
-        // --- STEP 2: SEND / SHARE ---
         sendForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             sendBtn.disabled = true;
@@ -300,41 +397,33 @@
             let smsUrlToOpen = null;
 
             try {
-                // 1. Handle EmailJS
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
-                    
-                    // REPLACE THESE WITH YOUR KEYS!
                     emailjs.init("nERbog0CqlvyZi4UE");
                     await emailjs.send("service_kmmyfad", "template_wcnazr9", {
                         to_email: emailInput.value,
                         theme: currentTheme,
                         image_url: imageUrl
                     });
-                    
                     successMessage += `✨ Email sent! `;
                 }
 
-                // 2. Handle Native SMS
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `I made a digital postcard about "${currentTheme}" for you! View it here: ${imageUrl}`;
+                    const smsBody = `Check out this trending postcard about "${currentTheme}"! View it here: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
 
-                // 3. Handle WhatsApp
                 if (checkWhatsapp.checked) {
-                    const waPhone = whatsappInput.value.replace(/\D/g,''); // strip non-digits for API
-                    const waBody = `Hello! I made a digital postcard about "${currentTheme}" for you. View it here: ${imageUrl}`;
-                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(waBody)}`;
+                    const waPhone = whatsappInput.value.replace(/\D/g,'');
+                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(imageUrl)}`;
                     successMessage += `💬 WhatsApp ready! `;
                 }
 
                 statusMessage.className = 'success';
                 statusMessage.textContent = successMessage || 'Success!';
                 
-                // Trigger external app redirects safely with small delays
                 if (smsUrlToOpen) {
                     setTimeout(() => { window.location.href = smsUrlToOpen; }, 400);
                 }
@@ -352,7 +441,7 @@
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Something went wrong. Check your EmailJS settings.';
+                statusMessage.textContent = '❌ Something went wrong. Check your settings.';
                 console.error(error);
                 updateFormUI();
             }
