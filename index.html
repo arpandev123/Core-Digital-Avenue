@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Postcard Generator with Live Trends</title>
     
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
@@ -42,7 +43,7 @@
         h2 { margin-top: 0; color: #D4AC0D; }
         p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 
-        /* --- TRENDING NEWS TICKER STYLES --- */
+        /* --- LIVE TRENDING TICKER STYLES --- */
         .trending-box {
             background: #fffdf0;
             border: 1px solid #f9e79f;
@@ -67,6 +68,7 @@
             color: #555;
             margin-bottom: 10px;
             font-style: italic;
+            min-height: 35px;
         }
 
         .trend-chips {
@@ -90,7 +92,6 @@
             background: #f4d03f;
             color: #fff;
         }
-        ------------------------------------
 
         .form-group {
             margin-bottom: 20px;
@@ -191,30 +192,34 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Pick a trending social topic below or type your own theme!</p>
+        <p>Pick a live online trend below or type your own theme!</p>
 
+        <!-- Live Online Trending News Ticker Box -->
         <div class="trending-box">
             <div class="trending-header">
-                <span>🔥 Live Social Trends</span>
-                <span id="trend-time">Just now</span>
+                <span>🔥 Live Online Trends</span>
+                <span id="trend-status">Fetching live feed...</span>
             </div>
             <div class="trend-snippet" id="trend-snippet-text">
-                Loading current social pulse...
+                Connecting to live global RSS feeds...
             </div>
             <div class="trend-chips" id="trend-chips-container">
-                </div>
+                <!-- Dynamically injected live trend buttons -->
+            </div>
         </div>
 
+        <!-- Step 1: Generate Postcard -->
         <form id="generateForm">
             <div class="form-group">
                 <label for="theme">Postcard Theme / Auto-Prompt</label>
-                <input type="text" id="theme" placeholder="Click a trend above or type custom theme" required>
+                <input type="text" id="theme" placeholder="Select a live trend above or type custom theme" required>
             </div>
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
 
         <div id="status-message"></div>
 
+        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
             
@@ -252,59 +257,77 @@
     </div>
 
     <script>
-        // Simulated or Live Trending Feed Data (Can be linked to an RSS/News API)
-        const trendingTopics = [
-            {
-                tag: "Northern Lights Spectacle",
-                prompt: "A breathtaking vibrant display of the Aurora Borealis over a snowy mountain cabin",
-                snippet: "Social feeds are flooded with rare multi-color aurora sightings visible across unusual latitudes last night."
-            },
-            {
-                tag: "Bioluminescent Beach",
-                prompt: "Glowing blue waves crashing softly onto a tranquil tropical sandy shore at midnight",
-                snippet: "Viral videos show glowing plankton lighting up coastlines, inspiring dream getaway posts."
-            },
-            {
-                tag: "Retro Futuristic City",
-                prompt: "A retro-futuristic 1980s synthwave cityscape with neon lights and flying cars at dusk",
-                snippet: "Nostalgic synthwave aesthetics are trending heavily across design and art communities today."
-            },
-            {
-                tag: "Cozy Autumn Cabin",
-                prompt: "A cozy wooden cabin nestled in a dense orange autumn forest with smoke rising from the chimney",
-                snippet: "Users are sharing aesthetic mood boards focusing on slow living and crisp weather vibes."
-            }
-        ];
-
-        // Load Trends into UI
-        function loadTrends() {
-            const container = document.getElementById('trend-chips-container');
+        // Fetch Live Trends Online via Public RSS-to-JSON API
+        async function fetchLiveTrends() {
+            const statusSpan = document.getElementById('trend-status');
             const snippetBox = document.getElementById('trend-snippet-text');
-            container.innerHTML = '';
+            const chipsContainer = document.getElementById('trend-chips-container');
 
-            // Pick a random trend snippet to display initially
-            const randomTrend = trendingTopics[Math.floor(Math.random() * trendingTopics.length)];
-            snippetBox.textContent = `"${randomTrend.snippet}"`;
+            try {
+                // Using Google News RSS feed converted to clean JSON via rss2json public endpoint
+                const rssUrl = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en";
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
-            trendingTopics.forEach(item => {
-                const chip = document.createElement('div');
-                chip.className = 'trend-chip';
-                chip.textContent = `# ${item.tag}`;
-                chip.onclick = () => {
-                    // Auto-fill the theme box and snippet info
-                    document.getElementById('theme').value = item.prompt;
-                    snippetBox.textContent = `"${item.snippet}"`;
-                    // Optional: auto-trigger generation immediately
-                    document.getElementById('generateForm').requestSubmit();
-                };
-                container.appendChild(chip);
-            });
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data.status === 'ok' && data.items.length > 0) {
+                    statusSpan.textContent = 'Live ✔';
+                    chipsContainer.innerHTML = '';
+
+                    // Grab top 5 live articles/trends
+                    const liveTrends = data.items.slice(0, 5);
+
+                    // Show snippet of the first trend by default
+                    snippetBox.textContent = `"${liveTrends[0].title}"`;
+
+                    liveTrends.forEach(item => {
+                        // Create a short chip label from the title words
+                        const words = item.title.split(' ').slice(0, 3).join('0'); // short handle
+                        const cleanTitle = item.title.replace(/(&amp;|&quot;|&#39;)/g, '');
+                        
+                        const chip = document.createElement('div');
+                        chip.className = 'trend-chip';
+                        // Keep text badge concise
+                        chip.textContent = `# ${item.title.split(' - ')[0].substring(0, 25)}...`;
+                        
+                        chip.onclick = () => {
+                            // Automatically turn headline into an AI art prompt style
+                            document.getElementById('theme').value = `An artistic postcard interpretation of: ${cleanTitle}`;
+                            snippetBox.textContent = `"${cleanTitle}"`;
+                            
+                            // Auto trigger generation
+                            document.getElementById('generateForm').requestSubmit();
+                        };
+                        chipsContainer.appendChild(chip);
+                    });
+                } else {
+                    throw new Error('No items found');
+                }
+            } catch (error) {
+                console.error("Error fetching live trends:", error);
+                statusSpan.textContent = 'Using Fallback';
+                snippetBox.textContent = `"Exploring modern technological marvels and global infrastructure innovations."`;
+                
+                // Fallback live topics if offline or network blocks public RSS proxy
+                chipsContainer.innerHTML = `
+                    <div class="trend-chip" onclick="setFallbackPrompt('Global Renewable Energy Expansion')"># Renewable Energy</div>
+                    <div class="trend-chip" onclick="setFallbackPrompt('Deep Sea Exploration Discoveries')"># Deep Sea Tech</div>
+                    <div class="trend-chip" onclick="setFallbackPrompt('Futuristic High Speed Rail Networks')"># High Speed Rail</div>
+                `;
+            }
         }
 
-        // Initialize trends on page load
-        window.addEventListener('DOMContentLoaded', loadTrends);
+        function setFallbackPrompt(topic) {
+            document.getElementById('theme').value = `An artistic postcard representation of ${topic}`;
+            document.getElementById('trend-snippet-text').textContent = `Trending online topic: ${topic}`;
+            document.getElementById('generateForm').requestSubmit();
+        }
 
-        // Standard App Elements
+        // Run fetch on page load
+        window.addEventListener('DOMContentLoaded', fetchLiveTrends);
+
+        // Standard App Logic
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -362,7 +385,7 @@
             generateBtn.disabled = true;
             generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🎨 Painting based on current social trend...';
+            statusMessage.textContent = '🎨 Painting based on live online trend...';
             previewSection.style.display = 'none';
 
             try {
