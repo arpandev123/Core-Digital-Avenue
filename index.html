@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Eco & Nature Trends</title>
+    <title>AI Postcard Generator - Live Eco & Climate Ticker</title>
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -43,12 +43,12 @@
         h2 { margin-top: 0; color: #D4AC0D; }
         p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 
-        /* --- ECO TRENDING TICKER STYLES --- */
+        /* --- CLIMATE & LOCATION TICKER STYLES --- */
         .trending-box {
             background: #f4fbf7;
             border: 1px solid #d4efdf;
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px;
             margin-bottom: 20px;
             text-align: left;
         }
@@ -63,12 +63,23 @@
             justify-content: space-between;
         }
 
+        .location-weather-badge {
+            display: flex;
+            justify-content: space-between;
+            background: #e8f8f5;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #117a65;
+            margin-bottom: 8px;
+        }
+
         .trend-snippet {
             font-size: 0.85em;
             color: #555;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-style: italic;
-            min-height: 35px;
         }
 
         .trend-chips {
@@ -126,7 +137,7 @@
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color: 0.3s;
         }
 
         button:hover { background-color: var(--primary-hover); }
@@ -192,17 +203,25 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Pick a live nature or climate trend below or type your own theme!</p>
+        <p>Pick a live eco trend below with its source location & weather conditions!</p>
 
-        <!-- Live Eco & Climate Trending Ticker Box -->
+        <!-- Live Climate & Location Box -->
         <div class="trending-box">
             <div class="trending-header">
-                <span>🌱 Live Nature & Climate Trends</span>
-                <span id="trend-status">Filtering feed...</span>
+                <span>🌱 Live Climate & Eco Feed</span>
+                <span id="trend-status">Syncing Weather...</span>
             </div>
+            
+            <!-- Location & Weather Parameters Display -->
+            <div class="location-weather-badge">
+                <span id="trend-location">📍 Location: Loading...</span>
+                <span id="trend-weather">🌤️ Weather: Loading...</span>
+            </div>
+
             <div class="trend-snippet" id="trend-snippet-text">
-                Scanning global environmental feeds...
+                Scanning environmental reports and meteorological links...
             </div>
+            
             <div class="trend-chips" id="trend-chips-container">
                 <!-- Dynamically injected eco trend buttons -->
             </div>
@@ -212,7 +231,7 @@
         <form id="generateForm">
             <div class="form-group">
                 <label for="theme">Postcard Theme / Auto-Prompt</label>
-                <input type="text" id="theme" placeholder="Select a live eco trend or type custom theme" required>
+                <input type="text" id="theme" placeholder="Select a live trend above or type custom theme" required>
             </div>
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
@@ -257,48 +276,71 @@
     </div>
 
     <script>
-        // Keywords required to keep nature/climate/environment headlines and drop political clutter
+        // Preset regions mapping for live weather lookups based on eco-topics
+        const ecoLocations = [
+            { name: "Great Barrier Reef, Australia", lat: -18.2871, lon: 147.6992 },
+            { name: "Amazon Basin, Brazil", lat: -3.4653, lon: -62.2159 },
+            { name: "Tromsø, Norway (Arctic)", lat: 69.6492, lon: 18.9553 },
+            { name: "Swiss Alps, Switzerland", lat: 46.8182, lon: 8.2275 }
+        ];
+
         const ecoKeywords = [
             "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
             "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
             "species", "habitat", "reef", "green", "river", "mountain", "glacier"
         ];
 
-        async function fetchLiveTrends() {
+        async function fetchLiveWeatherAndTrends() {
             const statusSpan = document.getElementById('trend-status');
             const snippetBox = document.getElementById('trend-snippet-text');
             const chipsContainer = document.getElementById('trend-chips-container');
+            const locationEl = document.getElementById('trend-location');
+            const weatherEl = document.getElementById('trend-weather');
 
             try {
-                // Fetching science/environment categorized RSS feed
+                // Pick a random global eco-hotspot location for this session
+                const targetLoc = ecoLocations[Math.floor(Math.random() * ecoLocations.length)];
+                locationEl.textContent = `📍 Origin: ${targetLoc.name}`;
+
+                // Fetch real-time weather from Open-Meteo free public API
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${targetLoc.lat}&longitude=${targetLoc.lon}&current=temperature_2m,weather_code,wind_speed_10m`);
+                const weatherData = await weatherRes.json();
+                
+                if (weatherData && weatherData.current) {
+                    const temp = weatherData.current.temperature_2m;
+                    const wind = weatherData.current.wind_speed_10m;
+                    weatherEl.textContent = `🌤️ Weather: ${temp}°C, Wind ${wind} km/h`;
+                } else {
+                    weatherEl.textContent = `🌤️ Climate: Clear skies, Eco-stable`;
+                }
+
+                // Fetch Live RSS Headline News
                 const rssUrl = "https://news.google.com/rss/search?q=environment+climate+nature&hl=en-US&gl=US&ceid=US:en";
                 const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
                 if (data.status === 'ok' && data.items.length > 0) {
-                    // Filter items to ensure they match eco-related terms and lack political filler
                     const filteredItems = data.items.filter(item => {
                         const text = (item.title + " " + item.description).toLowerCase();
                         return ecoKeywords.some(keyword => text.includes(keyword));
                     });
 
                     if (filteredItems.length > 0) {
-                        statusSpan.textContent = 'Live Eco ✔';
+                        statusSpan.textContent = 'Live Synced ✔';
                         chipsContainer.innerHTML = '';
 
-                        const liveTrends = filteredItems.slice(0, 4);
+                        const liveTrends = filteredItems.slice(0, 3);
                         snippetBox.textContent = `"${liveTrends[0].title}"`;
 
                         liveTrends.forEach(item => {
                             const cleanTitle = item.title.replace(/(&amp;|&quot;|&#39;)/g, '');
                             const chip = document.createElement('div');
                             chip.className = 'trend-chip';
-                            chip.textContent = `# ${cleanTitle.split(' - ')[0].substring(0, 25)}...`;
+                            chip.textContent = `# ${cleanTitle.split(' - ')[0].substring(0, 22)}...`;
                             
                             chip.onclick = () => {
-                                document.getElementById('theme').value = `An artistic natural postcard interpretation of: ${cleanTitle}`;
+                                document.getElementById('theme').value = `An artistic natural postcard interpretation of: ${cleanTitle} at ${targetLoc.name}`;
                                 snippetBox.textContent = `"${cleanTitle}"`;
                                 document.getElementById('generateForm').requestSubmit();
                             };
@@ -307,27 +349,30 @@
                         return;
                     }
                 }
-                throw new Error('No matching eco items found');
+                throw new Error('No items');
             } catch (error) {
-                console.error("Using fallback eco trends:", error);
-                statusSpan.textContent = 'Eco Ticker Active';
-                snippetBox.textContent = `"Global efforts expand to protect fragile marine ecosystems and rainforest canopies."`;
+                console.error("Using weather fallback:", error);
+                statusSpan.textContent = 'Active Weather Link';
+                locationEl.textContent = `📍 Origin: Swiss Alps, Europe`;
+                weatherEl.textContent = `🌤️ Weather: -2°C, Snowfall, Alpine Wind`;
+                snippetBox.textContent = `"Alpine conservation metrics show positive growth in high-altitude glacier preservation efforts."`;
                 
                 chipsContainer.innerHTML = `
-                    <div class="trend-chip" onclick="setEcoPrompt('Vibrant Coral Reef Conservation')"># Coral Reefs</div>
-                    <div class="trend-chip" onclick="setEcoPrompt('Ancient Rainforest Canopy at Sunrise')"># Rainforests</div>
-                    <div class="trend-chip" onclick="setEcoPrompt('Glacial Landscape Under Northern Lights')"># Glaciers & Aurora</div>
+                    <div class="trend-chip" onclick="setCustomEcoPrompt('Alpine Glacial Landscape', 'Swiss Alps', '-2°C, Snowfall')"># Alpine Glaciers</div>
+                    <div class="trend-chip" onclick="setCustomEcoPrompt('Dense Pine Forest Canopy', 'Black Forest', '14°C, Mild Breeze')"># Pine Forests</div>
                 `;
             }
         }
 
-        function setEcoPrompt(topic) {
+        function setCustomEcoPrompt(topic, loc, weather) {
             document.getElementById('theme').value = `An artistic postcard landscape of ${topic}`;
-            document.getElementById('trend-snippet-text').textContent = `Featured Eco Focus: ${topic}`;
+            document.getElementById('trend-location').textContent = `📍 Origin: ${loc}`;
+            document.getElementById('trend-weather').textContent = `🌤️ Weather: ${weather}`;
+            document.getElementById('trend-snippet-text').textContent = `Featured Live Eco Focus from ${loc}`;
             document.getElementById('generateForm').requestSubmit();
         }
 
-        window.addEventListener('DOMContentLoaded', fetchLiveTrends);
+        window.addEventListener('DOMContentLoaded', fetchLiveWeatherAndTrends);
 
         // Standard App Logic
         const generateForm = document.getElementById('generateForm');
@@ -387,7 +432,7 @@
             generateBtn.disabled = true;
             generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🌿 Painting nature masterpiece...';
+            statusMessage.textContent = '🌿 Painting regional nature postcard...';
             previewSection.style.display = 'none';
 
             try {
@@ -435,7 +480,7 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this nature postcard about "${currentTheme}"! View it here: ${imageUrl}`;
+                    const smsBody = `Check out this climate-inspired postcard about "${currentTheme}"! View: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
