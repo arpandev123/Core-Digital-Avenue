@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Global Eco & Climate Ticker</title>
+    <title>AI Postcard Generator - World Country Eco-Ticker</title>
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -36,14 +36,14 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 520px;
             text-align: center;
         }
 
         h2 { margin-top: 0; color: #D4AC0D; }
         p { font-size: 0.9em; color: #666; margin-bottom: 15px; }
 
-        /* --- REGION & CLIMATE TICKER STYLES --- */
+        /* --- COUNTRY SELECTOR STYLES --- */
         .region-selector-group {
             margin-bottom: 15px;
             text-align: left;
@@ -99,6 +99,7 @@
             font-weight: 600;
             color: #117a65;
             margin-bottom: 8px;
+            gap: 5px;
         }
 
         .trend-snippet {
@@ -229,37 +230,34 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Select your region below to view local climate data and eco-trends!</p>
+        <p>Select any country worldwide to fetch live weather & regional landmarks!</p>
 
-        <!-- Region Selector Dropdown -->
+        <!-- Dynamic Country Dropdown -->
         <div class="region-selector-group">
-            <label for="regionSelect">🌍 Choose Region Focus</label>
-            <select id="regionSelect" onchange="switchRegion()">
-                <option value="australia">Australia (Great Barrier Reef & Bushlands)</option>
-                <option value="europe">Europe (Alpine & Western Europe Climate)</option>
-                <option value="global">Global (Worldwide Earth & Ocean Watch)</option>
-                <option value="americas">North America (Pacific Northwest & Rockies)</option>
+            <label for="countrySelect">🌐 Select Country</label>
+            <select id="countrySelect" onchange="switchCountry()">
+                <option value="">Loading countries list...</option>
             </select>
         </div>
 
         <!-- Live Climate & Location Box -->
         <div class="trending-box">
             <div class="trending-header">
-                <span>🌱 Live Regional Feed</span>
+                <span>🌱 Live National Feed</span>
                 <span id="trend-status">Syncing...</span>
             </div>
             
             <div class="location-weather-badge">
-                <span id="trend-location">📍 Location: Loading...</span>
+                <span id="trend-location">📍 Capital: Loading...</span>
                 <span id="trend-weather">🌤️ Weather: Loading...</span>
             </div>
 
             <div class="trend-snippet" id="trend-snippet-text">
-                Fetching environmental conditions for selected region...
+                Fetching environmental conditions for selected country...
             </div>
             
             <div class="trend-chips" id="trend-chips-container">
-                <!-- Dynamically injected region trend buttons -->
+                <!-- Dynamically injected topic chips based on selected country -->
             </div>
         </div>
 
@@ -312,54 +310,53 @@
     </div>
 
     <script>
-        // Region mapping profiles with geo-coordinates and custom trending highlights
-        const regionProfiles = {
-            australia: {
-                name: "Cairns & Great Barrier Reef, Australia",
-                lat: -16.9186, lon: 145.7781,
-                snippet: "Marine scientists report active conservation sweeps protecting tropical coral ecosystems amid rising seasonal sea temperatures.",
-                topics: [
-                    { title: "Great Barrier Reef Marine Park", prompt: "Vibrant turquoise coral reef teeming with marine life under clear Australian sunlight" },
-                    { title: "Eucalyptus Bushland Recovery", prompt: "A peaceful Australian eucalyptus forest canopy with golden morning light filtering through" },
-                    { title: "Daintree Rainforest Canopy", prompt: "Lush ancient green tropical rainforest meeting a tranquil tropical river in Queensland" }
-                ]
-            },
-            europe: {
-                name: "Swiss Alps & Western Europe",
-                lat: 46.8182, lon: 8.2275,
-                snippet: "European climate observatories note persistent dry trends shifting focus toward high-altitude alpine preservation.",
-                topics: [
-                    { title: "Alpine Glacial Sanctuary", prompt: "A majestic snow-capped Alpine mountain range reflecting into a crystal clear glacial lake" },
-                    { title: "Black Forest Pine Canopy", prompt: "A dense, foggy European pine forest with rich emerald moss and soft morning mist" },
-                    { title: "Mediterranean Coastline", prompt: "A serene Mediterranean coastal cliffside overlooking deep blue tranquil waters at sunset" }
-                ]
-            },
-            global: {
-                name: "Global Biosphere Watch",
-                lat: 0.0000, lon: -78.1834,
-                snippet: "Worldwide environmental networks emphasize global commitments to expanding protected wetland and forest carbon sinks.",
-                topics: [
-                    { title: "Aurora Borealis Night Sky", prompt: "A breathtaking vivid green and purple aurora borealis dancing across a starry night sky" },
-                    { title: "Mangrove Wetland Ecosystem", prompt: "A thriving coastal mangrove wetland ecosystem fostering rich biodiversity at twilight" },
-                    { title: "Renewable Wind Farm Valley", prompt: "Modern sleek white wind turbines spinning gracefully across a green rolling valley landscape" }
-                ]
-            },
-            americas: {
-                name: "Pacific Northwest, North America",
-                lat: 47.6062, lon: -122.3321,
-                snippet: "Meteorological monitoring across western North America highlights seasonal temperate transitions in old-growth preserves.",
-                topics: [
-                    { title: "Cascade Mountain Evergreen Forest", prompt: "A towering evergreen pine forest with misty valleys and rugged mountain peaks" },
-                    { title: "Rocky Mountain Alpine Lake", prompt: "A pristine alpine lake nestled right under towering jagged Rocky Mountain peaks" },
-                    { title: "Pacific Coastline Sunset", prompt: "A dramatic rocky Pacific ocean coastline with waves crashing during a golden sunset" }
-                ]
-            }
-        };
+        let allCountriesData = [];
 
-        async function switchRegion() {
-            const selectEl = document.getElementById('regionSelect');
-            const selectedKey = selectEl.value;
-            const profile = regionProfiles[selectedKey];
+        // Fetch all countries from REST Countries API on startup and populate dropdown alphabetically
+        async function fetchCountries() {
+            const selectEl = document.getElementById('countrySelect');
+            try {
+                const response = await fetch('https://restcountries.com/v3.1/all?fields=name,capital,latlng,region');
+                const data = await response.json();
+                
+                // Filter and map countries that have capital coordinates
+                allCountriesData = data
+                    .filter(c => c.capital && c.latlng && c.latlng.length >= 2)
+                    .map(c => ({
+                        name: c.name.common,
+                        capital: c.capital[0],
+                        lat: c.latlng[0],
+                        lon: c.latlng[1],
+                        region: c.region
+                    }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                selectEl.innerHTML = '';
+                
+                allCountriesData.forEach((country, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = index;
+                    opt.textContent = `${country.name} (Capital: ${country.capital})`;
+                    selectEl.appendChild(opt);
+                });
+
+                // Default selection to Australia if present, otherwise first item
+                const ausIndex = allCountriesData.findIndex(c => c.name === "Australia");
+                selectEl.value = ausIndex !== -1 ? ausIndex : 0;
+
+                switchCountry();
+            } catch (err) {
+                selectEl.innerHTML = '<option value="">Failed to load countries. Refresh page.</option>';
+                console.error("Error fetching countries:", err);
+            }
+        }
+
+        async function switchCountry() {
+            const selectEl = document.getElementById('countrySelect');
+            const idx = selectEl.value;
+            if (idx === "" || !allCountriesData[idx]) return;
+
+            const country = allCountriesData[idx];
 
             const statusSpan = document.getElementById('trend-status');
             const locationEl = document.getElementById('trend-location');
@@ -368,45 +365,51 @@
             const chipsContainer = document.getElementById('trend-chips-container');
 
             statusSpan.textContent = 'Syncing...';
-            locationEl.textContent = `📍 Region: ${profile.name}`;
-            snippetBox.textContent = `"${profile.snippet}"`;
+            locationEl.textContent = `📍 ${country.capital}, ${country.name}`;
+            snippetBox.textContent = `Observing ecological and seasonal landscapes across ${country.name}...`;
             chipsContainer.innerHTML = '';
 
-            // Fetch live weather from Open-Meteo for the selected profile coordinates
+            // Fetch live weather from Open-Meteo for the selected country's capital coordinates
             try {
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${profile.lat}&longitude=${profile.lon}&current=temperature_2m,weather_code,wind_speed_10m`);
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${country.lat}&longitude=${country.lon}&current=temperature_2m,weather_code,wind_speed_10m`);
                 const weatherData = await weatherRes.json();
                 
                 if (weatherData && weatherData.current) {
                     const temp = weatherData.current.temperature_2m;
                     const wind = weatherData.current.wind_speed_10m;
-                    weatherEl.textContent = `🌤️ Weather: ${temp}°C, Wind ${wind} km/h`;
+                    weatherEl.textContent = `🌤️ ${temp}°C, Wind ${wind} km/h`;
                     statusSpan.textContent = 'Live Synced ✔';
                 } else {
-                    weatherEl.textContent = `🌤️ Climate: Stable baseline`;
+                    weatherEl.textContent = `🌤️ Climate: Stable`;
                     statusSpan.textContent = 'Synced ✔';
                 }
             } catch (err) {
-                weatherEl.textContent = `🌤️ Climate: Normal seasonal ranges`;
+                weatherEl.textContent = `🌤️ Climate: Seasonal Norms`;
                 statusSpan.textContent = 'Active Feed';
             }
 
-            // Populate clickable trend chips
-            profile.topics.forEach(t => {
+            // Generate contextual dynamic topic chips based on country details
+            const topics = [
+                { title: `${country.capital} Landmark View`, prompt: `A breathtaking architectural and scenic postcard view of ${country.capital}, ${country.name} during golden hour` },
+                { title: `Natural Biosphere of ${country.name}`, prompt: `A pristine and vibrant natural wildlife and wilderness landscape characteristic of ${country.name}` },
+                { title: `Scenic Horizon of ${country.name}`, prompt: `A stunning panoramic landscape horizon showing the unique terrain and nature of ${country.name}` }
+            ];
+
+            topics.forEach(t => {
                 const chip = document.createElement('div');
                 chip.className = 'trend-chip';
                 chip.textContent = `# ${t.title}`;
                 chip.onclick = () => {
                     document.getElementById('theme').value = t.prompt;
-                    snippetBox.textContent = `Focus: ${t.title} (${profile.name})`;
+                    snippetBox.textContent = `Focus: ${t.title} (${country.name})`;
                     document.getElementById('generateForm').requestSubmit();
                 };
                 chipsContainer.appendChild(chip);
             });
         }
 
-        // Initialize on load
-        window.addEventListener('DOMContentLoaded', switchRegion);
+        // Initialize country list on load
+        window.addEventListener('DOMContentLoaded', fetchCountries);
 
         // Standard App Logic
         const generateForm = document.getElementById('generateForm');
