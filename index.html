@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Live Eco & Climate Ticker</title>
+    <title>AI Postcard Generator - Global Eco & Climate Ticker</title>
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -32,29 +32,55 @@
 
         .container {
             background-color: var(--card-bg);
-            padding: 40px;
+            padding: 30px 40px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             text-align: center;
         }
 
         h2 { margin-top: 0; color: #D4AC0D; }
-        p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
+        p { font-size: 0.9em; color: #666; margin-bottom: 15px; }
 
-        /* --- CLIMATE & LOCATION TICKER STYLES --- */
+        /* --- REGION & CLIMATE TICKER STYLES --- */
+        .region-selector-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .region-selector-group label {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #27ae60;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #a3e4d7;
+            background-color: #f4fbf7;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #117a65;
+            cursor: pointer;
+        }
+
         .trending-box {
             background: #f4fbf7;
             border: 1px solid #d4efdf;
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px;
             margin-bottom: 20px;
             text-align: left;
         }
 
         .trending-header {
-            font-size: 0.8em;
+            font-size: 0.75em;
             font-weight: bold;
             color: #27ae60;
             text-transform: uppercase;
@@ -137,7 +163,7 @@
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color: 0.3s;
+            transition: background-color 0.3s;
         }
 
         button:hover { background-color: var(--primary-hover); }
@@ -203,27 +229,37 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Pick a live eco trend below with its source location & weather conditions!</p>
+        <p>Select your region below to view local climate data and eco-trends!</p>
+
+        <!-- Region Selector Dropdown -->
+        <div class="region-selector-group">
+            <label for="regionSelect">🌍 Choose Region Focus</label>
+            <select id="regionSelect" onchange="switchRegion()">
+                <option value="australia">Australia (Great Barrier Reef & Bushlands)</option>
+                <option value="europe">Europe (Alpine & Western Europe Climate)</option>
+                <option value="global">Global (Worldwide Earth & Ocean Watch)</option>
+                <option value="americas">North America (Pacific Northwest & Rockies)</option>
+            </select>
+        </div>
 
         <!-- Live Climate & Location Box -->
         <div class="trending-box">
             <div class="trending-header">
-                <span>🌱 Live Climate & Eco Feed</span>
-                <span id="trend-status">Syncing Weather...</span>
+                <span>🌱 Live Regional Feed</span>
+                <span id="trend-status">Syncing...</span>
             </div>
             
-            <!-- Location & Weather Parameters Display -->
             <div class="location-weather-badge">
                 <span id="trend-location">📍 Location: Loading...</span>
                 <span id="trend-weather">🌤️ Weather: Loading...</span>
             </div>
 
             <div class="trend-snippet" id="trend-snippet-text">
-                Scanning environmental reports and meteorological links...
+                Fetching environmental conditions for selected region...
             </div>
             
             <div class="trend-chips" id="trend-chips-container">
-                <!-- Dynamically injected eco trend buttons -->
+                <!-- Dynamically injected region trend buttons -->
             </div>
         </div>
 
@@ -231,7 +267,7 @@
         <form id="generateForm">
             <div class="form-group">
                 <label for="theme">Postcard Theme / Auto-Prompt</label>
-                <input type="text" id="theme" placeholder="Select a live trend above or type custom theme" required>
+                <input type="text" id="theme" placeholder="Select a trend above or type custom theme" required>
             </div>
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
@@ -276,103 +312,101 @@
     </div>
 
     <script>
-        // Preset regions mapping for live weather lookups based on eco-topics
-        const ecoLocations = [
-            { name: "Great Barrier Reef, Australia", lat: -18.2871, lon: 147.6992 },
-            { name: "Amazon Basin, Brazil", lat: -3.4653, lon: -62.2159 },
-            { name: "Tromsø, Norway (Arctic)", lat: 69.6492, lon: 18.9553 },
-            { name: "Swiss Alps, Switzerland", lat: 46.8182, lon: 8.2275 }
-        ];
+        // Region mapping profiles with geo-coordinates and custom trending highlights
+        const regionProfiles = {
+            australia: {
+                name: "Cairns & Great Barrier Reef, Australia",
+                lat: -16.9186, lon: 145.7781,
+                snippet: "Marine scientists report active conservation sweeps protecting tropical coral ecosystems amid rising seasonal sea temperatures.",
+                topics: [
+                    { title: "Great Barrier Reef Marine Park", prompt: "Vibrant turquoise coral reef teeming with marine life under clear Australian sunlight" },
+                    { title: "Eucalyptus Bushland Recovery", prompt: "A peaceful Australian eucalyptus forest canopy with golden morning light filtering through" },
+                    { title: "Daintree Rainforest Canopy", prompt: "Lush ancient green tropical rainforest meeting a tranquil tropical river in Queensland" }
+                ]
+            },
+            europe: {
+                name: "Swiss Alps & Western Europe",
+                lat: 46.8182, lon: 8.2275,
+                snippet: "European climate observatories note persistent dry trends shifting focus toward high-altitude alpine preservation.",
+                topics: [
+                    { title: "Alpine Glacial Sanctuary", prompt: "A majestic snow-capped Alpine mountain range reflecting into a crystal clear glacial lake" },
+                    { title: "Black Forest Pine Canopy", prompt: "A dense, foggy European pine forest with rich emerald moss and soft morning mist" },
+                    { title: "Mediterranean Coastline", prompt: "A serene Mediterranean coastal cliffside overlooking deep blue tranquil waters at sunset" }
+                ]
+            },
+            global: {
+                name: "Global Biosphere Watch",
+                lat: 0.0000, lon: -78.1834,
+                snippet: "Worldwide environmental networks emphasize global commitments to expanding protected wetland and forest carbon sinks.",
+                topics: [
+                    { title: "Aurora Borealis Night Sky", prompt: "A breathtaking vivid green and purple aurora borealis dancing across a starry night sky" },
+                    { title: "Mangrove Wetland Ecosystem", prompt: "A thriving coastal mangrove wetland ecosystem fostering rich biodiversity at twilight" },
+                    { title: "Renewable Wind Farm Valley", prompt: "Modern sleek white wind turbines spinning gracefully across a green rolling valley landscape" }
+                ]
+            },
+            americas: {
+                name: "Pacific Northwest, North America",
+                lat: 47.6062, lon: -122.3321,
+                snippet: "Meteorological monitoring across western North America highlights seasonal temperate transitions in old-growth preserves.",
+                topics: [
+                    { title: "Cascade Mountain Evergreen Forest", prompt: "A towering evergreen pine forest with misty valleys and rugged mountain peaks" },
+                    { title: "Rocky Mountain Alpine Lake", prompt: "A pristine alpine lake nestled right under towering jagged Rocky Mountain peaks" },
+                    { title: "Pacific Coastline Sunset", prompt: "A dramatic rocky Pacific ocean coastline with waves crashing during a golden sunset" }
+                ]
+            }
+        };
 
-        const ecoKeywords = [
-            "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
-            "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
-            "species", "habitat", "reef", "green", "river", "mountain", "glacier"
-        ];
+        async function switchRegion() {
+            const selectEl = document.getElementById('regionSelect');
+            const selectedKey = selectEl.value;
+            const profile = regionProfiles[selectedKey];
 
-        async function fetchLiveWeatherAndTrends() {
             const statusSpan = document.getElementById('trend-status');
-            const snippetBox = document.getElementById('trend-snippet-text');
-            const chipsContainer = document.getElementById('trend-chips-container');
             const locationEl = document.getElementById('trend-location');
             const weatherEl = document.getElementById('trend-weather');
+            const snippetBox = document.getElementById('trend-snippet-text');
+            const chipsContainer = document.getElementById('trend-chips-container');
 
+            statusSpan.textContent = 'Syncing...';
+            locationEl.textContent = `📍 Region: ${profile.name}`;
+            snippetBox.textContent = `"${profile.snippet}"`;
+            chipsContainer.innerHTML = '';
+
+            // Fetch live weather from Open-Meteo for the selected profile coordinates
             try {
-                // Pick a random global eco-hotspot location for this session
-                const targetLoc = ecoLocations[Math.floor(Math.random() * ecoLocations.length)];
-                locationEl.textContent = `📍 Origin: ${targetLoc.name}`;
-
-                // Fetch real-time weather from Open-Meteo free public API
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${targetLoc.lat}&longitude=${targetLoc.lon}&current=temperature_2m,weather_code,wind_speed_10m`);
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${profile.lat}&longitude=${profile.lon}&current=temperature_2m,weather_code,wind_speed_10m`);
                 const weatherData = await weatherRes.json();
                 
                 if (weatherData && weatherData.current) {
                     const temp = weatherData.current.temperature_2m;
                     const wind = weatherData.current.wind_speed_10m;
                     weatherEl.textContent = `🌤️ Weather: ${temp}°C, Wind ${wind} km/h`;
+                    statusSpan.textContent = 'Live Synced ✔';
                 } else {
-                    weatherEl.textContent = `🌤️ Climate: Clear skies, Eco-stable`;
+                    weatherEl.textContent = `🌤️ Climate: Stable baseline`;
+                    statusSpan.textContent = 'Synced ✔';
                 }
-
-                // Fetch Live RSS Headline News
-                const rssUrl = "https://news.google.com/rss/search?q=environment+climate+nature&hl=en-US&gl=US&ceid=US:en";
-                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                if (data.status === 'ok' && data.items.length > 0) {
-                    const filteredItems = data.items.filter(item => {
-                        const text = (item.title + " " + item.description).toLowerCase();
-                        return ecoKeywords.some(keyword => text.includes(keyword));
-                    });
-
-                    if (filteredItems.length > 0) {
-                        statusSpan.textContent = 'Live Synced ✔';
-                        chipsContainer.innerHTML = '';
-
-                        const liveTrends = filteredItems.slice(0, 3);
-                        snippetBox.textContent = `"${liveTrends[0].title}"`;
-
-                        liveTrends.forEach(item => {
-                            const cleanTitle = item.title.replace(/(&amp;|&quot;|&#39;)/g, '');
-                            const chip = document.createElement('div');
-                            chip.className = 'trend-chip';
-                            chip.textContent = `# ${cleanTitle.split(' - ')[0].substring(0, 22)}...`;
-                            
-                            chip.onclick = () => {
-                                document.getElementById('theme').value = `An artistic natural postcard interpretation of: ${cleanTitle} at ${targetLoc.name}`;
-                                snippetBox.textContent = `"${cleanTitle}"`;
-                                document.getElementById('generateForm').requestSubmit();
-                            };
-                            chipsContainer.appendChild(chip);
-                        });
-                        return;
-                    }
-                }
-                throw new Error('No items');
-            } catch (error) {
-                console.error("Using weather fallback:", error);
-                statusSpan.textContent = 'Active Weather Link';
-                locationEl.textContent = `📍 Origin: Swiss Alps, Europe`;
-                weatherEl.textContent = `🌤️ Weather: -2°C, Snowfall, Alpine Wind`;
-                snippetBox.textContent = `"Alpine conservation metrics show positive growth in high-altitude glacier preservation efforts."`;
-                
-                chipsContainer.innerHTML = `
-                    <div class="trend-chip" onclick="setCustomEcoPrompt('Alpine Glacial Landscape', 'Swiss Alps', '-2°C, Snowfall')"># Alpine Glaciers</div>
-                    <div class="trend-chip" onclick="setCustomEcoPrompt('Dense Pine Forest Canopy', 'Black Forest', '14°C, Mild Breeze')"># Pine Forests</div>
-                `;
+            } catch (err) {
+                weatherEl.textContent = `🌤️ Climate: Normal seasonal ranges`;
+                statusSpan.textContent = 'Active Feed';
             }
+
+            // Populate clickable trend chips
+            profile.topics.forEach(t => {
+                const chip = document.createElement('div');
+                chip.className = 'trend-chip';
+                chip.textContent = `# ${t.title}`;
+                chip.onclick = () => {
+                    document.getElementById('theme').value = t.prompt;
+                    snippetBox.textContent = `Focus: ${t.title} (${profile.name})`;
+                    document.getElementById('generateForm').requestSubmit();
+                };
+                chipsContainer.appendChild(chip);
+            });
         }
 
-        function setCustomEcoPrompt(topic, loc, weather) {
-            document.getElementById('theme').value = `An artistic postcard landscape of ${topic}`;
-            document.getElementById('trend-location').textContent = `📍 Origin: ${loc}`;
-            document.getElementById('trend-weather').textContent = `🌤️ Weather: ${weather}`;
-            document.getElementById('trend-snippet-text').textContent = `Featured Live Eco Focus from ${loc}`;
-            document.getElementById('generateForm').requestSubmit();
-        }
-
-        window.addEventListener('DOMContentLoaded', fetchLiveWeatherAndTrends);
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', switchRegion);
 
         // Standard App Logic
         const generateForm = document.getElementById('generateForm');
@@ -480,7 +514,7 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this climate-inspired postcard about "${currentTheme}"! View: ${imageUrl}`;
+                    const smsBody = `Check out this postcard about "${currentTheme}"! View: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
