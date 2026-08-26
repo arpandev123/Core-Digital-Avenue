@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator with Live Trends</title>
+    <title>AI Postcard Generator - Eco & Nature Trends</title>
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -43,10 +43,10 @@
         h2 { margin-top: 0; color: #D4AC0D; }
         p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 
-        /* --- LIVE TRENDING TICKER STYLES --- */
+        /* --- ECO TRENDING TICKER STYLES --- */
         .trending-box {
-            background: #fffdf0;
-            border: 1px solid #f9e79f;
+            background: #f4fbf7;
+            border: 1px solid #d4efdf;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 20px;
@@ -56,7 +56,7 @@
         .trending-header {
             font-size: 0.8em;
             font-weight: bold;
-            color: #b7950b;
+            color: #27ae60;
             text-transform: uppercase;
             margin-bottom: 6px;
             display: flex;
@@ -78,9 +78,9 @@
         }
 
         .trend-chip {
-            background: #fef9e7;
-            border: 1px solid #f7dc6f;
-            color: #7d6608;
+            background: #e8f8f5;
+            border: 1px solid #a3e4d7;
+            color: #117a65;
             padding: 4px 8px;
             font-size: 0.75em;
             border-radius: 12px;
@@ -89,7 +89,7 @@
         }
 
         .trend-chip:hover {
-            background: #f4d03f;
+            background: #48c9b0;
             color: #fff;
         }
 
@@ -192,19 +192,19 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Pick a live online trend below or type your own theme!</p>
+        <p>Pick a live nature or climate trend below or type your own theme!</p>
 
-        <!-- Live Online Trending News Ticker Box -->
+        <!-- Live Eco & Climate Trending Ticker Box -->
         <div class="trending-box">
             <div class="trending-header">
-                <span>🔥 Live Online Trends</span>
-                <span id="trend-status">Fetching live feed...</span>
+                <span>🌱 Live Nature & Climate Trends</span>
+                <span id="trend-status">Filtering feed...</span>
             </div>
             <div class="trend-snippet" id="trend-snippet-text">
-                Connecting to live global RSS feeds...
+                Scanning global environmental feeds...
             </div>
             <div class="trend-chips" id="trend-chips-container">
-                <!-- Dynamically injected live trend buttons -->
+                <!-- Dynamically injected eco trend buttons -->
             </div>
         </div>
 
@@ -212,7 +212,7 @@
         <form id="generateForm">
             <div class="form-group">
                 <label for="theme">Postcard Theme / Auto-Prompt</label>
-                <input type="text" id="theme" placeholder="Select a live trend above or type custom theme" required>
+                <input type="text" id="theme" placeholder="Select a live eco trend or type custom theme" required>
             </div>
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
@@ -257,74 +257,76 @@
     </div>
 
     <script>
-        // Fetch Live Trends Online via Public RSS-to-JSON API
+        // Keywords required to keep nature/climate/environment headlines and drop political clutter
+        const ecoKeywords = [
+            "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
+            "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
+            "species", "habitat", "reef", "green", "river", "mountain", "glacier"
+        ];
+
         async function fetchLiveTrends() {
             const statusSpan = document.getElementById('trend-status');
             const snippetBox = document.getElementById('trend-snippet-text');
             const chipsContainer = document.getElementById('trend-chips-container');
 
             try {
-                // Using Google News RSS feed converted to clean JSON via rss2json public endpoint
-                const rssUrl = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en";
+                // Fetching science/environment categorized RSS feed
+                const rssUrl = "https://news.google.com/rss/search?q=environment+climate+nature&hl=en-US&gl=US&ceid=US:en";
                 const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
                 if (data.status === 'ok' && data.items.length > 0) {
-                    statusSpan.textContent = 'Live ✔';
-                    chipsContainer.innerHTML = '';
-
-                    // Grab top 5 live articles/trends
-                    const liveTrends = data.items.slice(0, 5);
-
-                    // Show snippet of the first trend by default
-                    snippetBox.textContent = `"${liveTrends[0].title}"`;
-
-                    liveTrends.forEach(item => {
-                        // Create a short chip label from the title words
-                        const words = item.title.split(' ').slice(0, 3).join('0'); // short handle
-                        const cleanTitle = item.title.replace(/(&amp;|&quot;|&#39;)/g, '');
-                        
-                        const chip = document.createElement('div');
-                        chip.className = 'trend-chip';
-                        // Keep text badge concise
-                        chip.textContent = `# ${item.title.split(' - ')[0].substring(0, 25)}...`;
-                        
-                        chip.onclick = () => {
-                            // Automatically turn headline into an AI art prompt style
-                            document.getElementById('theme').value = `An artistic postcard interpretation of: ${cleanTitle}`;
-                            snippetBox.textContent = `"${cleanTitle}"`;
-                            
-                            // Auto trigger generation
-                            document.getElementById('generateForm').requestSubmit();
-                        };
-                        chipsContainer.appendChild(chip);
+                    // Filter items to ensure they match eco-related terms and lack political filler
+                    const filteredItems = data.items.filter(item => {
+                        const text = (item.title + " " + item.description).toLowerCase();
+                        return ecoKeywords.some(keyword => text.includes(keyword));
                     });
-                } else {
-                    throw new Error('No items found');
+
+                    if (filteredItems.length > 0) {
+                        statusSpan.textContent = 'Live Eco ✔';
+                        chipsContainer.innerHTML = '';
+
+                        const liveTrends = filteredItems.slice(0, 4);
+                        snippetBox.textContent = `"${liveTrends[0].title}"`;
+
+                        liveTrends.forEach(item => {
+                            const cleanTitle = item.title.replace(/(&amp;|&quot;|&#39;)/g, '');
+                            const chip = document.createElement('div');
+                            chip.className = 'trend-chip';
+                            chip.textContent = `# ${cleanTitle.split(' - ')[0].substring(0, 25)}...`;
+                            
+                            chip.onclick = () => {
+                                document.getElementById('theme').value = `An artistic natural postcard interpretation of: ${cleanTitle}`;
+                                snippetBox.textContent = `"${cleanTitle}"`;
+                                document.getElementById('generateForm').requestSubmit();
+                            };
+                            chipsContainer.appendChild(chip);
+                        });
+                        return;
+                    }
                 }
+                throw new Error('No matching eco items found');
             } catch (error) {
-                console.error("Error fetching live trends:", error);
-                statusSpan.textContent = 'Using Fallback';
-                snippetBox.textContent = `"Exploring modern technological marvels and global infrastructure innovations."`;
+                console.error("Using fallback eco trends:", error);
+                statusSpan.textContent = 'Eco Ticker Active';
+                snippetBox.textContent = `"Global efforts expand to protect fragile marine ecosystems and rainforest canopies."`;
                 
-                // Fallback live topics if offline or network blocks public RSS proxy
                 chipsContainer.innerHTML = `
-                    <div class="trend-chip" onclick="setFallbackPrompt('Global Renewable Energy Expansion')"># Renewable Energy</div>
-                    <div class="trend-chip" onclick="setFallbackPrompt('Deep Sea Exploration Discoveries')"># Deep Sea Tech</div>
-                    <div class="trend-chip" onclick="setFallbackPrompt('Futuristic High Speed Rail Networks')"># High Speed Rail</div>
+                    <div class="trend-chip" onclick="setEcoPrompt('Vibrant Coral Reef Conservation')"># Coral Reefs</div>
+                    <div class="trend-chip" onclick="setEcoPrompt('Ancient Rainforest Canopy at Sunrise')"># Rainforests</div>
+                    <div class="trend-chip" onclick="setEcoPrompt('Glacial Landscape Under Northern Lights')"># Glaciers & Aurora</div>
                 `;
             }
         }
 
-        function setFallbackPrompt(topic) {
-            document.getElementById('theme').value = `An artistic postcard representation of ${topic}`;
-            document.getElementById('trend-snippet-text').textContent = `Trending online topic: ${topic}`;
+        function setEcoPrompt(topic) {
+            document.getElementById('theme').value = `An artistic postcard landscape of ${topic}`;
+            document.getElementById('trend-snippet-text').textContent = `Featured Eco Focus: ${topic}`;
             document.getElementById('generateForm').requestSubmit();
         }
 
-        // Run fetch on page load
         window.addEventListener('DOMContentLoaded', fetchLiveTrends);
 
         // Standard App Logic
@@ -385,7 +387,7 @@
             generateBtn.disabled = true;
             generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🎨 Painting based on live online trend...';
+            statusMessage.textContent = '🌿 Painting nature masterpiece...';
             previewSection.style.display = 'none';
 
             try {
@@ -433,7 +435,7 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this trending postcard about "${currentTheme}"! View it here: ${imageUrl}`;
+                    const smsBody = `Check out this nature postcard about "${currentTheme}"! View it here: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
