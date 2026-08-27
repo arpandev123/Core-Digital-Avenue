@@ -115,6 +115,37 @@
             overflow-y: auto;
         }
 
+        /* Source Link Button */
+        .source-link-container {
+            margin-top: 12px;
+            text-align: right;
+        }
+
+        .source-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #117a65;
+            background-color: #d4efdf;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+            width: auto;
+        }
+
+        .source-btn:hover {
+            background-color: #117a65;
+            color: #ffffff;
+        }
+
+        .source-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
         .form-group {
             margin-bottom: 20px;
             text-align: left;
@@ -216,7 +247,7 @@
         <h2>AI Postcard Creator</h2>
         <p>Filter live global trends by country & category to render context-aware visual postcards!</p>
 
-        <!-- Dynamic Live News Feed Section with Category Support -->
+        <!-- Dynamic Live News Feed Section with Source Link -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -265,6 +296,13 @@
 
             <div class="news-snippet" id="news-snippet-text">
                 Fetching latest headline details...
+            </div>
+
+            <!-- Source Link Button -->
+            <div class="source-link-container">
+                <a id="source-link" href="#" target="_blank" rel="noopener noreferrer" class="source-btn disabled">
+                    Read Full Source Article ↗
+                </a>
             </div>
         </div>
 
@@ -335,10 +373,8 @@
             statusLabel.textContent = "Fetching...";
             headlineSelect.innerHTML = '<option value="">Loading headlines...</option>';
             
-            // Fetch Weather for selected capital
             fetchWeather(lat, lon, capitalName);
 
-            // Construct RSS topic URL based on category selection
             let rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             
             if (category !== 'all') {
@@ -404,12 +440,17 @@
             const themeInput = document.getElementById('theme');
             const countrySelect = document.getElementById('countrySelect');
             const categorySelect = document.getElementById('categorySelect');
+            const sourceLink = document.getElementById('source-link');
             
             const countryName = countrySelect.options[countrySelect.selectedIndex].text.split(' ')[0];
             const categoryName = categorySelect.options[categorySelect.selectedIndex].text.split(' ')[1] || 'Trend';
 
             const idx = headlineSelect.value;
-            if (idx === "" || !fetchedArticles[idx]) return;
+            if (idx === "" || !fetchedArticles[idx]) {
+                sourceLink.classList.add('disabled');
+                sourceLink.href = "#";
+                return;
+            }
 
             const article = fetchedArticles[idx];
             
@@ -419,16 +460,24 @@
 
             snippetBox.textContent = cleanSnippet.length > 150 ? cleanSnippet.substring(0, 150) + "..." : cleanSnippet;
             
-            // Prompt format tuned for visual composition based on category
+            // Set link source and enable button
+            if (article.link || article.guid) {
+                sourceLink.href = article.link || article.guid;
+                sourceLink.classList.remove('disabled');
+            } else {
+                sourceLink.classList.add('disabled');
+                sourceLink.href = "#";
+            }
+
             themeInput.value = `A fine art postcard illustrating ${cleanTitle} set in ${countryName}, ${categoryName} theme, digital painting style`;
         }
 
         function useFallbackNews(countryCode, category) {
             const fallbackMap = {
-                TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency." }],
-                BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects." }],
-                SCIENCE: [{ title: "Deep Space Telescope Detects Unprecedented Atmospheric Signals", description: "Astronomers publish initial readings from recent interstellar observations." }],
-                default: [{ title: "Global Innovation Conference Focuses on Clean Energy", description: "Delegates showcase sustainable engineering solutions across public infrastructure." }]
+                TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency.", link: "https://news.google.com" }],
+                BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects.", link: "https://news.google.com" }],
+                SCIENCE: [{ title: "Deep Space Telescope Detects Unprecedented Atmospheric Signals", description: "Astronomers publish initial readings from recent interstellar observations.", link: "https://news.google.com" }],
+                default: [{ title: "Global Innovation Conference Focuses on Clean Energy", description: "Delegates showcase sustainable engineering solutions across public infrastructure.", link: "https://news.google.com" }]
             };
 
             fetchedArticles = fallbackMap[category] || fallbackMap['default'];
@@ -542,8 +591,8 @@
             try {
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
-                    emailjs.init("nERbog0CqlvyZi4UE");
-                    await emailjs.send("service_kmmyfad", "template_wcnazr9", {
+                    emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+                    await emailjs.send("YOUR_EMAILJS_SERVICE_ID", "YOUR_EMAILJS_TEMPLATE_ID", {
                         to_email: emailInput.value,
                         theme: currentTheme,
                         image_url: imageUrl
