@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Live News Feed</title>
+    <title>AI Postcard Generator - Categorized Live News</title>
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -36,7 +36,7 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 550px;
+            max-width: 580px;
             text-align: center;
         }
 
@@ -62,6 +62,13 @@
             justify-content: space-between;
         }
 
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
         .select-group {
             margin-bottom: 12px;
         }
@@ -84,7 +91,6 @@
             font-weight: 600;
             color: #117a65;
             cursor: pointer;
-            margin-bottom: 8px;
         }
 
         .location-weather-badge {
@@ -208,31 +214,45 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Select a country to pull real-time news headlines, location data & live weather!</p>
+        <p>Filter live global trends by country & category to render context-aware visual postcards!</p>
 
-        <!-- Dynamic Live News Feed Section -->
+        <!-- Dynamic Live News Feed Section with Category Support -->
         <div class="news-box">
             <div class="news-header">
-                <span>📰 Live Country News Stream</span>
+                <span>📰 Live Categorized News Stream</span>
                 <span id="news-status">Ready</span>
             </div>
             
-            <div class="select-group">
-                <label for="countrySelect">1. Choose Target Country:</label>
-                <select id="countrySelect" onchange="fetchLiveCountryNews()">
-                    <option value="au" data-lat="-35.2809" data-lon="149.1300" data-capital="Canberra, Australia">Australia 🇦🇺</option>
-                    <option value="us" data-lat="38.8951" data-lon="-77.0364" data-capital="Washington D.C., USA">United States 🇺🇸</option>
-                    <option value="gb" data-lat="51.5074" data-lon="-0.1278" data-capital="London, UK">United Kingdom 🇬🇧</option>
-                    <option value="ca" data-lat="45.4215" data-lon="-75.6972" data-capital="Ottawa, Canada">Canada 🇨🇦</option>
-                    <option value="in" data-lat="28.6139" data-lon="77.2090" data-capital="New Delhi, India">India 🇮🇳</option>
-                    <option value="jp" data-lat="35.6762" data-lon="139.6503" data-capital="Tokyo, Japan">Japan 🇯🇵</option>
-                    <option value="de" data-lat="52.5200" data-lon="13.4050" data-capital="Berlin, Germany">Germany 🇩🇪</option>
-                    <option value="fr" data-lat="48.8566" data-lon="2.3522" data-capital="Paris, France">France 🇫🇷</option>
-                </select>
+            <div class="filter-grid">
+                <div class="select-group">
+                    <label for="countrySelect">1. Choose Country:</label>
+                    <select id="countrySelect" onchange="fetchLiveCountryNews()">
+                        <option value="au" data-lat="-35.2809" data-lon="149.1300" data-capital="Canberra, Australia">Australia 🇦🇺</option>
+                        <option value="us" data-lat="38.8951" data-lon="-77.0364" data-capital="Washington D.C., USA">United States 🇺🇸</option>
+                        <option value="gb" data-lat="51.5074" data-lon="-0.1278" data-capital="London, UK">United Kingdom 🇬🇧</option>
+                        <option value="ca" data-lat="45.4215" data-lon="-75.6972" data-capital="Ottawa, Canada">Canada 🇨🇦</option>
+                        <option value="in" data-lat="28.6139" data-lon="77.2090" data-capital="New Delhi, India">India 🇮🇳</option>
+                        <option value="jp" data-lat="35.6762" data-lon="139.6503" data-capital="Tokyo, Japan">Japan 🇯🇵</option>
+                        <option value="de" data-lat="52.5200" data-lon="13.4050" data-capital="Berlin, Germany">Germany 🇩🇪</option>
+                        <option value="fr" data-lat="48.8566" data-lon="2.3522" data-capital="Paris, France">France 🇫🇷</option>
+                    </select>
+                </div>
+
+                <div class="select-group">
+                    <label for="categorySelect">2. Trend Category:</label>
+                    <select id="categorySelect" onchange="fetchLiveCountryNews()">
+                        <option value="all">🔥 Main / Top Trends</option>
+                        <option value="TECHNOLOGY">💻 Technology & AI</option>
+                        <option value="BUSINESS">📈 Business & Economy</option>
+                        <option value="SCIENCE">🔬 Science & Space</option>
+                        <option value="ENTERTAINMENT">🎬 Entertainment & Arts</option>
+                        <option value="SPORTS">⚽ Sports & Athletics</option>
+                    </select>
+                </div>
             </div>
 
             <div class="select-group">
-                <label for="headlineSelect">2. Select Live Article Headline:</label>
+                <label for="headlineSelect">3. Select Live Article Headline:</label>
                 <select id="headlineSelect" onchange="handleHeadlineChange()">
                     <option value="">Loading live news feed...</option>
                 </select>
@@ -301,11 +321,13 @@
 
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
+            const categorySelect = document.getElementById('categorySelect');
             const headlineSelect = document.getElementById('headlineSelect');
             const statusLabel = document.getElementById('news-status');
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
 
             const countryCode = countrySelect.value;
+            const category = categorySelect.value;
             const lat = selectedOption.getAttribute('data-lat');
             const lon = selectedOption.getAttribute('data-lon');
             const capitalName = selectedOption.getAttribute('data-capital');
@@ -313,11 +335,16 @@
             statusLabel.textContent = "Fetching...";
             headlineSelect.innerHTML = '<option value="">Loading headlines...</option>';
             
-            // Fetch Weather for selected country capital via Open-Meteo
+            // Fetch Weather for selected capital
             fetchWeather(lat, lon, capitalName);
 
-            // Fetch Live News RSS Feed via rss2json API proxy (No API Key Required)
-            const rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            // Construct RSS topic URL based on category selection
+            let rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            
+            if (category !== 'all') {
+                rssFeedUrl = `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            }
+
             const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssFeedUrl)}`;
 
             try {
@@ -331,7 +358,6 @@
                     fetchedArticles.forEach((item, index) => {
                         const opt = document.createElement('option');
                         opt.value = index;
-                        // Clean up Google News title suffix (e.g. " - BBC News")
                         const cleanTitle = item.title.replace(/ - [^-]+$/, '');
                         opt.textContent = cleanTitle;
                         headlineSelect.appendChild(opt);
@@ -345,7 +371,7 @@
             } catch (err) {
                 console.warn("Live RSS fetch failed, loading fallback data", err);
                 statusLabel.textContent = "Fallback Active";
-                useFallbackNews(countryCode);
+                useFallbackNews(countryCode, category);
             }
         }
 
@@ -377,33 +403,35 @@
             const snippetBox = document.getElementById('news-snippet-text');
             const themeInput = document.getElementById('theme');
             const countrySelect = document.getElementById('countrySelect');
+            const categorySelect = document.getElementById('categorySelect');
+            
             const countryName = countrySelect.options[countrySelect.selectedIndex].text.split(' ')[0];
+            const categoryName = categorySelect.options[categorySelect.selectedIndex].text.split(' ')[1] || 'Trend';
 
             const idx = headlineSelect.value;
             if (idx === "" || !fetchedArticles[idx]) return;
 
             const article = fetchedArticles[idx];
             
-            // Clean title and snippet content
             const cleanTitle = article.title.replace(/ - [^-]+$/, '');
             const rawDescription = article.description || article.content || cleanTitle;
-            const cleanSnippet = rawDescription.replace(/<[^>]*>?/gm, ''); // Strips out HTML elements
+            const cleanSnippet = rawDescription.replace(/<[^>]*>?/gm, '');
 
             snippetBox.textContent = cleanSnippet.length > 150 ? cleanSnippet.substring(0, 150) + "..." : cleanSnippet;
             
-            // Generate visual postcard prompt based on news title
-            themeInput.value = `A high quality artistic postcard rendering depicting ${cleanTitle} in ${countryName}, fine art style`;
+            // Prompt format tuned for visual composition based on category
+            themeInput.value = `A fine art postcard illustrating ${cleanTitle} set in ${countryName}, ${categoryName} theme, digital painting style`;
         }
 
-        function useFallbackNews(countryCode) {
+        function useFallbackNews(countryCode, category) {
             const fallbackMap = {
-                au: [{ title: "Great Barrier Reef Coral Conservation Milestone Achieved", description: "Marine scientists report significant success in new reef protection programs." }],
-                us: [{ title: "National Space Agency Unveils Lunar Base Construction Plan", description: "New engineering blueprints highlight sustainable lunar habitats." }],
-                gb: [{ title: "Historic Thames Landmark Restored to Former Glory", description: "Architectural restoration works complete ahead of national summer celebrations." }],
-                default: [{ title: "Global Innovation Summit Highlights Renewable Energy Breakthroughs", description: "Engineers gather to present new zero-emission infrastructure developments." }]
+                TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency." }],
+                BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects." }],
+                SCIENCE: [{ title: "Deep Space Telescope Detects Unprecedented Atmospheric Signals", description: "Astronomers publish initial readings from recent interstellar observations." }],
+                default: [{ title: "Global Innovation Conference Focuses on Clean Energy", description: "Delegates showcase sustainable engineering solutions across public infrastructure." }]
             };
 
-            fetchedArticles = fallbackMap[countryCode] || fallbackMap['default'];
+            fetchedArticles = fallbackMap[category] || fallbackMap['default'];
             const headlineSelect = document.getElementById('headlineSelect');
             headlineSelect.innerHTML = '';
             
@@ -418,7 +446,7 @@
 
         window.addEventListener('DOMContentLoaded', fetchLiveCountryNews);
 
-        // Core Application & Delivery Code
+        // Core App Logic
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -476,7 +504,7 @@
             generateBtn.disabled = true;
             generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🎨 Rendering postcard based on live news topic...';
+            statusMessage.textContent = '🎨 Rendering postcard artwork...';
             previewSection.style.display = 'none';
 
             try {
@@ -525,7 +553,7 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this news-inspired postcard for "${currentTheme}"! View: ${imageUrl}`;
+                    const smsBody = `Check out this news postcard for "${currentTheme}"! View: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
@@ -555,7 +583,7 @@
 
             } catch (error) {
                 statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Delivery error. Check your credentials.';
+                statusMessage.textContent = '❌ Delivery error. Check your settings.';
                 console.error(error);
                 updateFormUI();
             }
