@@ -247,7 +247,7 @@
         <h2>AI Postcard Creator</h2>
         <p>Filter live global trends by country & category to render context-aware visual postcards!</p>
 
-        <!-- Dynamic Live News Feed Section with Source Link -->
+        <!-- Dynamic Live News Feed Section with Source Link & Nature/Eco Category -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -273,6 +273,7 @@
                     <label for="categorySelect">2. Trend Category:</label>
                     <select id="categorySelect" onchange="fetchLiveCountryNews()">
                         <option value="all">🔥 Main / Top Trends</option>
+                        <option value="ENVIRONMENT">🌱 Nature, Eco & Climate</option>
                         <option value="TECHNOLOGY">💻 Technology & AI</option>
                         <option value="BUSINESS">📈 Business & Economy</option>
                         <option value="SCIENCE">🔬 Science & Space</option>
@@ -357,6 +358,13 @@
     <script>
         let fetchedArticles = [];
 
+        // Keywords list for custom filtering or fallback verification
+        const ecoKeywords = [
+            "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
+            "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
+            "species", "habitat", "reef", "green", "river", "mountain", "glacier"
+        ];
+
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
             const categorySelect = document.getElementById('categorySelect');
@@ -377,7 +385,11 @@
 
             let rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             
-            if (category !== 'all') {
+            if (category === 'ENVIRONMENT') {
+                // Topic search feed targeting eco keywords
+                const queryStr = encodeURIComponent(ecoKeywords.slice(0, 8).join(" OR "));
+                rssFeedUrl = `https://news.google.com/rss/search?q=${queryStr}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            } else if (category !== 'all') {
                 rssFeedUrl = `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             }
 
@@ -460,7 +472,6 @@
 
             snippetBox.textContent = cleanSnippet.length > 150 ? cleanSnippet.substring(0, 150) + "..." : cleanSnippet;
             
-            // Set link source and enable button
             if (article.link || article.guid) {
                 sourceLink.href = article.link || article.guid;
                 sourceLink.classList.remove('disabled');
@@ -474,6 +485,10 @@
 
         function useFallbackNews(countryCode, category) {
             const fallbackMap = {
+                ENVIRONMENT: [
+                    { title: "Global Wildlife Reserve Expands Protection Area Across Coastal Regions", description: "Conservation teams announce new marine and forest sanctuaries to shield endangered habitats.", link: "https://news.google.com" },
+                    { title: "Renewable Energy Capacity Reaches Record High in Solar & Wind Initiatives", description: "Recent climate reports show accelerated adoption of sustainable power generation.", link: "https://news.google.com" }
+                ],
                 TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency.", link: "https://news.google.com" }],
                 BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects.", link: "https://news.google.com" }],
                 SCIENCE: [{ title: "Deep Space Telescope Detects Unprecedented Atmospheric Signals", description: "Astronomers publish initial readings from recent interstellar observations.", link: "https://news.google.com" }],
@@ -495,7 +510,6 @@
 
         window.addEventListener('DOMContentLoaded', fetchLiveCountryNews);
 
-        // Core App Logic
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -591,8 +605,8 @@
             try {
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
-                    emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
-                    await emailjs.send("YOUR_EMAILJS_SERVICE_ID", "YOUR_EMAILJS_TEMPLATE_ID", {
+                    emailjs.init("nERbog0CqlvyZi4UE");
+                    await emailjs.send("service_kmmyfad", "template_wcnazr9", {
                         to_email: emailInput.value,
                         theme: currentTheme,
                         image_url: imageUrl
