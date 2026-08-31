@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Categorized Live News & File Upload</title>
+    <title>AI Ghibli Postcard Generator</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
@@ -266,7 +266,7 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Filter live global trends or attach your own local device photos to render custom postcards!</p>
+        <p>Filter live global trends or attach your own photo to generate Ghibli-inspired postcard art!</p>
 
         <div class="news-box">
             <div class="news-header">
@@ -328,25 +328,26 @@
 
         <div class="image-mode-toggle">
             <label>
-                <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 AI Image Generation
+                <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 News to Ghibli Art
             </label>
             <label>
-                <input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 📁 Upload Device Photo
+                <input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 🖼️ Photo to Ghibli Style
             </label>
         </div>
 
         <form id="generateForm">
             <div class="form-group" id="aiPromptGroup">
-                <label for="theme">Postcard Theme / Auto-Generated Prompt</label>
+                <label for="theme">Postcard Prompt (Ghibli Style Active)</label>
                 <input type="text" id="theme" placeholder="Select a headline above..." required>
             </div>
 
             <div class="form-group hidden" id="deviceUploadGroup">
-                <label for="imageFileInput">Select Image File from Device</label>
+                <label for="imageFileInput">Select Device Photo (Re-imagined into Ghibli Style)</label>
                 <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
+                <p style="font-size: 0.75em; color: #888; margin-top: 5px;">Your photo will be styled using Studio Ghibli aesthetics (vibrant skies, soft watercolor shading, hand-drawn anime details).</p>
             </div>
 
-            <button type="submit" id="generateBtn">Generate Postcard</button>
+            <button type="submit" id="generateBtn">Generate Ghibli Postcard</button>
         </form>
 
         <div id="status-message"></div>
@@ -355,7 +356,7 @@
             <h3>Your Postcard Preview</h3>
             
             <div class="postcard-preview">
-                <img id="generated-image" src="" alt="Postcard Visual Art">
+                <img id="generated-image" src="" alt="Ghibli Style Postcard Visual">
             </div>
 
             <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
@@ -389,7 +390,7 @@
 
     <script>
         let fetchedArticles = [];
-        let uploadedImageDataUrl = null; // Holds base64 string for device uploaded images
+        let uploadedFile = null;
 
         const ecoKeywords = [
             "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
@@ -484,11 +485,9 @@
             const snippetBox = document.getElementById('news-snippet-text');
             const themeInput = document.getElementById('theme');
             const countrySelect = document.getElementById('countrySelect');
-            const categorySelect = document.getElementById('categorySelect');
             const sourceLink = document.getElementById('source-link');
             
             const countryName = countrySelect.options[countrySelect.selectedIndex].text.split(' ')[0];
-            const categoryName = categorySelect.options[categorySelect.selectedIndex].text.split(' ')[1] || 'Trend';
 
             const idx = headlineSelect.value;
             if (idx === "" || !fetchedArticles[idx]) {
@@ -513,7 +512,8 @@
                 sourceLink.href = "#";
             }
 
-            themeInput.value = `A fine art postcard illustrating ${cleanTitle} set in ${countryName}, ${categoryName} theme, digital painting style`;
+            // Enhanced Ghibli style prompt structure
+            themeInput.value = `A scenic Studio Ghibli anime style postcard showing ${cleanTitle} in ${countryName}, Hayao Miyazaki aesthetic, vibrant blue sky, fluffy white clouds, lush nature, watercolor painting`;
         }
 
         function toggleImageSourceMode() {
@@ -527,44 +527,49 @@
                 deviceUploadGroup.classList.add('hidden');
                 document.getElementById('theme').required = true;
                 document.getElementById('imageFileInput').required = false;
-                generateBtn.textContent = 'Generate Postcard';
+                generateBtn.textContent = 'Generate Ghibli Postcard';
             } else {
                 aiPromptGroup.classList.add('hidden');
                 deviceUploadGroup.classList.remove('hidden');
                 document.getElementById('theme').required = false;
                 document.getElementById('imageFileInput').required = true;
-                generateBtn.textContent = 'Attach Image & Preview';
+                generateBtn.textContent = 'Transform Photo to Ghibli Style';
             }
         }
 
         function handleDeviceFileSelect(event) {
             const file = event.target.files[0];
-            if (file) {
-                if (!file.type.startsWith('image/')) {
-                    alert('Please select a valid image file.');
-                    event.target.value = '';
-                    uploadedImageDataUrl = null;
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImageDataUrl = e.target.result;
-                };
-                reader.readAsDataURL(file);
+            if (file && file.type.startsWith('image/')) {
+                uploadedFile = file;
             } else {
-                uploadedImageDataUrl = null;
+                uploadedFile = null;
+            }
+        }
+
+        // Uploads image to temporary public host (ImgBB / free tier) to obtain a URL for AI processing
+        async function uploadImageToPublicHost(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // Uses a public image hosting endpoint for temporary AI processing
+            const response = await fetch('https://api.imgbb.com/1/upload?key=6d2570563716b18a32a90ea0d35b2737', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data && data.data && data.data.url) {
+                return data.data.url;
+            } else {
+                throw new Error("Failed to upload image for processing");
             }
         }
 
         function useFallbackNews(countryCode, category) {
             const fallbackMap = {
                 ECO: [
-                    { title: "Global Coastal Marine Reef Conservation Network Expands", description: "Environmental groups announce expanded protective zones for coral reefs and ocean wildlife.", link: "https://news.google.com" },
-                    { title: "Renewable Energy Capacity Reaches Record High in Forest Regions", description: "Solar and wind infrastructure developments reduce carbon emissions across national parks.", link: "https://news.google.com" }
+                    { title: "Global Coastal Marine Reef Conservation Network Expands", description: "Environmental groups announce expanded protective zones for coral reefs and ocean wildlife.", link: "https://news.google.com" }
                 ],
-                TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency.", link: "https://news.google.com" }],
-                BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects.", link: "https://news.google.com" }],
-                SCIENCE: [{ title: "Deep Space Telescope Detects Unprecedented Atmospheric Signals", description: "Astronomers publish initial readings from recent interstellar observations.", link: "https://news.google.com" }],
                 default: [{ title: "Global Innovation Conference Focuses on Clean Energy", description: "Delegates showcase sustainable engineering solutions across public infrastructure.", link: "https://news.google.com" }]
             };
 
@@ -645,43 +650,63 @@
 
             if (isAi) {
                 currentTheme = document.getElementById('theme').value;
-                generateBtn.textContent = 'Generating Art...';
-                statusMessage.textContent = '🎨 Rendering postcard artwork...';
+                generateBtn.textContent = 'Rendering Ghibli Art...';
+                statusMessage.textContent = '🎨 Rendering Studio Ghibli style postcard...';
 
                 try {
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme)}?width=400&height=300&nologo=true`;
-                    await new Promise(resolve => setTimeout(resolve, 1200));
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                     
                     imgEl.src = imageUrl;
                     imgEl.onload = () => {
                         statusMessage.textContent = '';
                         previewSection.style.display = 'block';
                         generateBtn.disabled = false;
-                        generateBtn.textContent = 'Generate New Postcard';
+                        generateBtn.textContent = 'Generate Ghibli Postcard';
                     };
                 } catch (error) {
                     statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Failed to generate postcard visual.';
+                    statusMessage.textContent = '❌ Failed to render postcard visual.';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Generate Postcard';
+                    generateBtn.textContent = 'Generate Ghibli Postcard';
                 }
             } else {
-                // Device File Attachment Mode
-                currentTheme = "Custom Attached Image";
-                generateBtn.textContent = 'Processing File...';
-                statusMessage.textContent = '📁 Loading attached image...';
-
-                if (uploadedImageDataUrl) {
-                    imgEl.src = uploadedImageDataUrl;
-                    statusMessage.textContent = '';
-                    previewSection.style.display = 'block';
-                    generateBtn.disabled = false;
-                    generateBtn.textContent = 'Attach Image & Preview';
-                } else {
+                // Photo-to-Ghibli Mode
+                if (!uploadedFile) {
                     statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Please select a file from your device first.';
+                    statusMessage.textContent = '❌ Please select an image file first.';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Attach Image & Preview';
+                    return;
+                }
+
+                try {
+                    generateBtn.textContent = 'Uploading Photo...';
+                    statusMessage.textContent = '📤 Processing photo for AI transformation...';
+                    
+                    const publicImageUrl = await uploadImageToPublicHost(uploadedFile);
+
+                    generateBtn.textContent = 'Styling Ghibli Art...';
+                    statusMessage.textContent = '✨ Transforming photo into Studio Ghibli anime style...';
+
+                    // Constructs an Image-to-Image Ghibli transformation prompt URL
+                    const ghibliPrompt = `Studio Ghibli anime style version of image ${publicImageUrl}, Hayao Miyazaki aesthetic, beautiful watercolor palette, vibrant blue skies, soft detailed anime shading`;
+                    const ghibliImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(ghibliPrompt)}?width=400&height=300&nologo=true`;
+
+                    currentTheme = "Ghibli Re-imagined Photo Postcard";
+
+                    imgEl.src = ghibliImageUrl;
+                    imgEl.onload = () => {
+                        statusMessage.textContent = '';
+                        previewSection.style.display = 'block';
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Transform Photo to Ghibli Style';
+                    };
+                } catch (error) {
+                    console.error(error);
+                    statusMessage.className = 'error';
+                    statusMessage.textContent = '❌ Error transforming image into Ghibli style.';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Transform Photo to Ghibli Style';
                 }
             }
         });
@@ -711,15 +736,14 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this postcard! View: ${imageUrl.length > 200 ? 'Attached Image' : imageUrl}`;
+                    const smsBody = `Check out my Ghibli postcard: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
 
                 if (checkWhatsapp.checked) {
                     const waPhone = whatsappInput.value.replace(/\D/g,'');
-                    const text = imageUrl.length > 200 ? 'Check out my custom postcard attachment!' : imageUrl;
-                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(text)}`;
+                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(imageUrl)}`;
                     successMessage += `💬 WhatsApp ready! `;
                 }
 
