@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI & Canvas Ghibli Postcard Generator</title>
+    <title>AI & Canvas Postcard Generator</title>
     
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
@@ -267,9 +266,8 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Filter live news or transform your own uploaded photo directly into digital art!</p>
+        <p>Filter live news or upload a device photo to generate a custom postcard!</p>
 
-        <!-- Dynamic Live News Feed Section -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -328,30 +326,28 @@
             </div>
         </div>
 
-        <!-- Mode Toggle -->
         <div class="image-mode-toggle">
             <label>
-                <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 News to Ghibli Art
+                <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 News to AI Postcard
             </label>
             <label>
-                <input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 🖼️ Photo Canvas Art Filter
+                <input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 🖼️ Upload Device Photo
             </label>
         </div>
 
         <form id="generateForm">
-            <!-- AI Text Prompt Mode -->
             <div class="form-group" id="aiPromptGroup">
-                <label for="theme">Postcard Prompt (Ghibli Style Active)</label>
+                <label for="theme">Postcard Prompt</label>
                 <input type="text" id="theme" placeholder="Select a headline above..." required>
             </div>
 
-            <!-- Device Upload Mode -->
             <div class="form-group hidden" id="deviceUploadGroup">
                 <label for="imageFileInput">Select Device Photo</label>
                 <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
                 <div style="margin-top: 10px;">
-                    <label for="artStyleSelect">Art Style Filter:</label>
+                    <label for="artStyleSelect">Image Style Option:</label>
                     <select id="artStyleSelect">
+                        <option value="original">📷 Original Photo (No Filter)</option>
                         <option value="ghibli">🌸 Ghibli Watercolor Anime Filter</option>
                         <option value="posterize">🎨 Vibrant Posterized Pop Art</option>
                         <option value="sketch">✏️ Hand-Drawn Pencil Sketch</option>
@@ -360,15 +356,13 @@
                 </div>
             </div>
 
-            <button type="submit" id="generateBtn">Generate Ghibli Postcard</button>
+            <button type="submit" id="generateBtn">Generate Postcard Visual</button>
         </form>
 
         <div id="status-message"></div>
 
-        <!-- Hidden canvas for client-side processing -->
         <canvas id="artCanvas" style="display:none;"></canvas>
 
-        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
             
@@ -529,7 +523,8 @@
                 sourceLink.href = "#";
             }
 
-            themeInput.value = `Studio Ghibli anime style postcard showing ${cleanTitle} in ${countryName}, Hayao Miyazaki aesthetic, lush detailed landscape, vibrant watercolor painting`;
+            // Reverted back to standard postcard prompt format
+            themeInput.value = `A scenic postcard showing ${cleanTitle} in ${countryName}, beautiful landscape, high quality photo, vibrant colors`;
         }
 
         function toggleImageSourceMode() {
@@ -543,13 +538,13 @@
                 deviceUploadGroup.classList.add('hidden');
                 document.getElementById('theme').required = true;
                 document.getElementById('imageFileInput').required = false;
-                generateBtn.textContent = 'Generate Ghibli Postcard';
+                generateBtn.textContent = 'Generate Postcard Visual';
             } else {
                 aiPromptGroup.classList.add('hidden');
                 deviceUploadGroup.classList.remove('hidden');
                 document.getElementById('theme').required = false;
                 document.getElementById('imageFileInput').required = true;
-                generateBtn.textContent = 'Apply Canvas Art Filter';
+                generateBtn.textContent = 'Use Selected Photo';
             }
         }
 
@@ -570,7 +565,7 @@
             }
         }
 
-        // Direct Client-Side Canvas Art Processing Logic
+        // Processing Photo Options (Supports Original Image as well as Canvas Filters)
         function processPhotoToArt(style) {
             const canvas = document.getElementById('artCanvas');
             const ctx = canvas.getContext('2d');
@@ -592,7 +587,11 @@
             canvas.width = width;
             canvas.height = height;
 
-            if (style === 'ghibli') {
+            if (style === 'original') {
+                // Draws original photo untouched
+                ctx.filter = 'none';
+                ctx.drawImage(loadedUserImage, 0, 0, width, height);
+            } else if (style === 'ghibli') {
                 ctx.filter = 'saturate(180%) contrast(115%) brightness(105%) sepia(15%)';
                 ctx.drawImage(loadedUserImage, 0, 0, width, height);
 
@@ -600,12 +599,11 @@
                 const data = imgData.data;
 
                 for (let i = 0; i < data.length; i += 4) {
-                    data[i] = Math.min(255, data[i] * 1.05);     // Red warm boost
-                    data[i+1] = Math.min(255, data[i+1] * 1.08); // Green vibrant boost
-                    data[i+2] = Math.min(255, data[i+2] * 0.95); // Blue softening
+                    data[i] = Math.min(255, data[i] * 1.05);
+                    data[i+1] = Math.min(255, data[i+1] * 1.08);
+                    data[i+2] = Math.min(255, data[i+2] * 0.95);
                 }
                 ctx.putImageData(imgData, 0, 0);
-
             } else if (style === 'posterize') {
                 ctx.filter = 'saturate(200%) contrast(140%)';
                 ctx.drawImage(loadedUserImage, 0, 0, width, height);
@@ -621,11 +619,9 @@
                     data[i+2] = Math.floor(data[i+2] / step) * step;
                 }
                 ctx.putImageData(imgData, 0, 0);
-
             } else if (style === 'sketch') {
                 ctx.filter = 'grayscale(100%) contrast(200%) brightness(120%)';
                 ctx.drawImage(loadedUserImage, 0, 0, width, height);
-
             } else if (style === 'oil') {
                 ctx.filter = 'saturate(150%) contrast(120%) blur(1px)';
                 ctx.drawImage(loadedUserImage, 0, 0, width, height);
@@ -717,8 +713,8 @@
 
             if (isAi) {
                 currentTheme = document.getElementById('theme').value;
-                generateBtn.textContent = 'Rendering Ghibli Art...';
-                statusMessage.textContent = '🎨 Rendering Studio Ghibli style postcard...';
+                generateBtn.textContent = 'Rendering Postcard...';
+                statusMessage.textContent = '🎨 Rendering postcard visual...';
 
                 try {
                     const seed = Math.floor(Math.random() * 1000000);
@@ -729,16 +725,16 @@
                         statusMessage.textContent = '';
                         previewSection.style.display = 'block';
                         generateBtn.disabled = false;
-                        generateBtn.textContent = 'Generate Ghibli Postcard';
+                        generateBtn.textContent = 'Generate Postcard Visual';
                     };
                 } catch (error) {
                     statusMessage.className = 'error';
                     statusMessage.textContent = '❌ Failed to render postcard visual.';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Generate Ghibli Postcard';
+                    generateBtn.textContent = 'Generate Postcard Visual';
                 }
             } else {
-                // Photo Canvas Mode
+                // Photo Upload Mode
                 if (!loadedUserImage) {
                     statusMessage.className = 'error';
                     statusMessage.textContent = '❌ Please select an image file from your device first.';
@@ -747,27 +743,27 @@
                 }
 
                 try {
-                    generateBtn.textContent = 'Applying Art Filter...';
-                    statusMessage.textContent = '✨ Processing photo with Canvas digital art filter...';
+                    generateBtn.textContent = 'Preparing Photo...';
+                    statusMessage.textContent = '⚙️ Preparing photo for preview...';
 
                     const selectedStyle = document.getElementById('artStyleSelect').value;
                     const resultDataUrl = processPhotoToArt(selectedStyle);
 
-                    currentTheme = "Art Filtered Photo Postcard";
+                    currentTheme = "Uploaded Photo Postcard";
 
                     imgEl.src = resultDataUrl;
                     imgEl.onload = () => {
                         statusMessage.textContent = '';
                         previewSection.style.display = 'block';
                         generateBtn.disabled = false;
-                        generateBtn.textContent = 'Apply Canvas Art Filter';
+                        generateBtn.textContent = 'Use Selected Photo';
                     };
                 } catch (error) {
                     console.error(error);
                     statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Error transforming image into art style.';
+                    statusMessage.textContent = '❌ Error preparing image.';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Apply Canvas Art Filter';
+                    generateBtn.textContent = 'Use Selected Photo';
                 }
             }
         });
@@ -797,7 +793,7 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out my Ghibli postcard: ${imageUrl}`;
+                    const smsBody = `Check out my postcard: ${imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
