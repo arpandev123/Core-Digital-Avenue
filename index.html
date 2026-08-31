@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Postcard Generator - Categorized Live News</title>
+    <title>AI Postcard Generator - Categorized Live News & File Upload</title>
     
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
@@ -115,7 +114,6 @@
             overflow-y: auto;
         }
 
-        /* Source Link Button */
         .source-link-container {
             margin-top: 12px;
             text-align: right;
@@ -146,6 +144,27 @@
             pointer-events: none;
         }
 
+        .image-mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            background: #fafafa;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .image-mode-toggle label {
+            font-size: 0.85em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         .form-group {
             margin-bottom: 20px;
             text-align: left;
@@ -158,13 +177,14 @@
             font-size: 0.9em;
         }
 
-        input[type="text"], input[type="email"], input[type="tel"] {
+        input[type="text"], input[type="email"], input[type="tel"], input[type="file"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 1em;
+            font-size: 0.9em;
+            background-color: #fff;
         }
 
         input:focus { border-color: var(--primary-color); outline: none; }
@@ -204,6 +224,7 @@
         .postcard-preview img {
             width: 100%; height: auto; display: block;
             background-color: #eee; min-height: 250px;
+            object-fit: cover;
         }
 
         .checkbox-group {
@@ -245,9 +266,8 @@
 
     <div class="container">
         <h2>AI Postcard Creator</h2>
-        <p>Filter live global trends by country & category to render context-aware visual postcards!</p>
+        <p>Filter live global trends or attach your own local device photos to render custom postcards!</p>
 
-        <!-- Dynamic Live News Feed Section with Source Link & Nature/Eco Category -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -273,7 +293,7 @@
                     <label for="categorySelect">2. Trend Category:</label>
                     <select id="categorySelect" onchange="fetchLiveCountryNews()">
                         <option value="all">🔥 Main / Top Trends</option>
-                        <option value="ENVIRONMENT">🌱 Nature, Eco & Climate</option>
+                        <option value="ECO">🌱 Nature & Environment</option>
                         <option value="TECHNOLOGY">💻 Technology & AI</option>
                         <option value="BUSINESS">📈 Business & Economy</option>
                         <option value="SCIENCE">🔬 Science & Space</option>
@@ -299,7 +319,6 @@
                 Fetching latest headline details...
             </div>
 
-            <!-- Source Link Button -->
             <div class="source-link-container">
                 <a id="source-link" href="#" target="_blank" rel="noopener noreferrer" class="source-btn disabled">
                     Read Full Source Article ↗
@@ -307,23 +326,36 @@
             </div>
         </div>
 
-        <!-- Step 1: Generate Postcard -->
+        <div class="image-mode-toggle">
+            <label>
+                <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 AI Image Generation
+            </label>
+            <label>
+                <input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 📁 Upload Device Photo
+            </label>
+        </div>
+
         <form id="generateForm">
-            <div class="form-group">
+            <div class="form-group" id="aiPromptGroup">
                 <label for="theme">Postcard Theme / Auto-Generated Prompt</label>
                 <input type="text" id="theme" placeholder="Select a headline above..." required>
             </div>
+
+            <div class="form-group hidden" id="deviceUploadGroup">
+                <label for="imageFileInput">Select Image File from Device</label>
+                <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
+            </div>
+
             <button type="submit" id="generateBtn">Generate Postcard</button>
         </form>
 
         <div id="status-message"></div>
 
-        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
             
             <div class="postcard-preview">
-                <img id="generated-image" src="" alt="Generated Postcard Art">
+                <img id="generated-image" src="" alt="Postcard Visual Art">
             </div>
 
             <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
@@ -357,8 +389,8 @@
 
     <script>
         let fetchedArticles = [];
+        let uploadedImageDataUrl = null; // Holds base64 string for device uploaded images
 
-        // Keywords list for custom filtering or fallback verification
         const ecoKeywords = [
             "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
             "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
@@ -383,14 +415,15 @@
             
             fetchWeather(lat, lon, capitalName);
 
-            let rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
-            
-            if (category === 'ENVIRONMENT') {
-                // Topic search feed targeting eco keywords
-                const queryStr = encodeURIComponent(ecoKeywords.slice(0, 8).join(" OR "));
-                rssFeedUrl = `https://news.google.com/rss/search?q=${queryStr}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            let rssFeedUrl = "";
+
+            if (category === 'ECO') {
+                const queryStr = ecoKeywords.slice(0, 8).join(" OR ");
+                rssFeedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryStr)}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             } else if (category !== 'all') {
                 rssFeedUrl = `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            } else {
+                rssFeedUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             }
 
             const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssFeedUrl)}`;
@@ -483,11 +516,51 @@
             themeInput.value = `A fine art postcard illustrating ${cleanTitle} set in ${countryName}, ${categoryName} theme, digital painting style`;
         }
 
+        function toggleImageSourceMode() {
+            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
+            const aiPromptGroup = document.getElementById('aiPromptGroup');
+            const deviceUploadGroup = document.getElementById('deviceUploadGroup');
+            const generateBtn = document.getElementById('generateBtn');
+
+            if (isAi) {
+                aiPromptGroup.classList.remove('hidden');
+                deviceUploadGroup.classList.add('hidden');
+                document.getElementById('theme').required = true;
+                document.getElementById('imageFileInput').required = false;
+                generateBtn.textContent = 'Generate Postcard';
+            } else {
+                aiPromptGroup.classList.add('hidden');
+                deviceUploadGroup.classList.remove('hidden');
+                document.getElementById('theme').required = false;
+                document.getElementById('imageFileInput').required = true;
+                generateBtn.textContent = 'Attach Image & Preview';
+            }
+        }
+
+        function handleDeviceFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select a valid image file.');
+                    event.target.value = '';
+                    uploadedImageDataUrl = null;
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageDataUrl = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedImageDataUrl = null;
+            }
+        }
+
         function useFallbackNews(countryCode, category) {
             const fallbackMap = {
-                ENVIRONMENT: [
-                    { title: "Global Wildlife Reserve Expands Protection Area Across Coastal Regions", description: "Conservation teams announce new marine and forest sanctuaries to shield endangered habitats.", link: "https://news.google.com" },
-                    { title: "Renewable Energy Capacity Reaches Record High in Solar & Wind Initiatives", description: "Recent climate reports show accelerated adoption of sustainable power generation.", link: "https://news.google.com" }
+                ECO: [
+                    { title: "Global Coastal Marine Reef Conservation Network Expands", description: "Environmental groups announce expanded protective zones for coral reefs and ocean wildlife.", link: "https://news.google.com" },
+                    { title: "Renewable Energy Capacity Reaches Record High in Forest Regions", description: "Solar and wind infrastructure developments reduce carbon emissions across national parks.", link: "https://news.google.com" }
                 ],
                 TECHNOLOGY: [{ title: "Breakthrough AI Architecture Unveiled at Global Summit", description: "Engineers present dynamic models improving processing speeds and energy efficiency.", link: "https://news.google.com" }],
                 BUSINESS: [{ title: "Markets React as New Sustainable Infrastructure Fund Launches", description: "Major global institutions signal increased funding for smart city transport projects.", link: "https://news.google.com" }],
@@ -510,6 +583,7 @@
 
         window.addEventListener('DOMContentLoaded', fetchLiveCountryNews);
 
+        // Core App Logic
         const generateForm = document.getElementById('generateForm');
         const sendForm = document.getElementById('sendForm');
         const previewSection = document.getElementById('preview-section');
@@ -561,33 +635,54 @@
 
         generateForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            currentTheme = document.getElementById('theme').value;
             const generateBtn = document.getElementById('generateBtn');
+            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
+            const imgEl = document.getElementById('generated-image');
 
             generateBtn.disabled = true;
-            generateBtn.textContent = 'Generating Art...';
             statusMessage.className = 'loading';
-            statusMessage.textContent = '🎨 Rendering postcard artwork...';
             previewSection.style.display = 'none';
 
-            try {
-                const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme)}?width=400&height=300&nologo=true`;
-                await new Promise(resolve => setTimeout(resolve, 1200));
-                
-                const imgEl = document.getElementById('generated-image');
-                imgEl.src = imageUrl;
+            if (isAi) {
+                currentTheme = document.getElementById('theme').value;
+                generateBtn.textContent = 'Generating Art...';
+                statusMessage.textContent = '🎨 Rendering postcard artwork...';
 
-                imgEl.onload = () => {
+                try {
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme)}?width=400&height=300&nologo=true`;
+                    await new Promise(resolve => setTimeout(resolve, 1200));
+                    
+                    imgEl.src = imageUrl;
+                    imgEl.onload = () => {
+                        statusMessage.textContent = '';
+                        previewSection.style.display = 'block';
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Generate New Postcard';
+                    };
+                } catch (error) {
+                    statusMessage.className = 'error';
+                    statusMessage.textContent = '❌ Failed to generate postcard visual.';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate Postcard';
+                }
+            } else {
+                // Device File Attachment Mode
+                currentTheme = "Custom Attached Image";
+                generateBtn.textContent = 'Processing File...';
+                statusMessage.textContent = '📁 Loading attached image...';
+
+                if (uploadedImageDataUrl) {
+                    imgEl.src = uploadedImageDataUrl;
                     statusMessage.textContent = '';
                     previewSection.style.display = 'block';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Generate New Postcard';
-                };
-            } catch (error) {
-                statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Failed to generate postcard visual.';
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'Generate Postcard';
+                    generateBtn.textContent = 'Attach Image & Preview';
+                } else {
+                    statusMessage.className = 'error';
+                    statusMessage.textContent = '❌ Please select a file from your device first.';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Attach Image & Preview';
+                }
             }
         });
 
@@ -605,8 +700,8 @@
             try {
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
-                    emailjs.init("nERbog0CqlvyZi4UE");
-                    await emailjs.send("service_kmmyfad", "template_wcnazr9", {
+                    emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+                    await emailjs.send("YOUR_EMAILJS_SERVICE_ID", "YOUR_EMAILJS_TEMPLATE_ID", {
                         to_email: emailInput.value,
                         theme: currentTheme,
                         image_url: imageUrl
@@ -616,14 +711,15 @@
 
                 if (checkText.checked) {
                     const phone = phoneInput.value;
-                    const smsBody = `Check out this news postcard for "${currentTheme}"! View: ${imageUrl}`;
+                    const smsBody = `Check out this postcard! View: ${imageUrl.length > 200 ? 'Attached Image' : imageUrl}`;
                     smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
                     successMessage += `📱 SMS app opened! `;
                 }
 
                 if (checkWhatsapp.checked) {
                     const waPhone = whatsappInput.value.replace(/\D/g,'');
-                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(imageUrl)}`;
+                    const text = imageUrl.length > 200 ? 'Check out my custom postcard attachment!' : imageUrl;
+                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(text)}`;
                     successMessage += `💬 WhatsApp ready! `;
                 }
 
