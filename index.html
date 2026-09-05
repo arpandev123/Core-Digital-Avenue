@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI & Canvas Postcard Generator</title>
     
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
@@ -268,6 +269,7 @@
         <h2>AI Postcard Creator</h2>
         <p>Filter live news or upload a device photo to generate a custom postcard!</p>
 
+        <!-- Dynamic Live News Feed Section -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -293,12 +295,14 @@
                     <label for="categorySelect">2. Trend Category:</label>
                     <select id="categorySelect" onchange="fetchLiveCountryNews()">
                         <option value="all">🔥 Main / Top Trends</option>
+                        <option value="SUPPLY_CHAIN">📦 Supply Chain & Logistics</option>
+                        <option value="MANUFACTURING">🏭 Advanced Manufacturing</option>
+                        <option value="RARE_EARTH">💎 Rare Earth & Critical Minerals</option>
+                        <option value="MATERIALS">🧱 Materials & Commodities</option>
                         <option value="ECO">🌱 Nature & Environment</option>
                         <option value="TECHNOLOGY">💻 Technology & AI</option>
                         <option value="BUSINESS">📈 Business & Economy</option>
                         <option value="SCIENCE">🔬 Science & Space</option>
-                        <option value="ENTERTAINMENT">🎬 Entertainment & Arts</option>
-                        <option value="SPORTS">⚽ Sports & Athletics</option>
                     </select>
                 </div>
             </div>
@@ -326,6 +330,7 @@
             </div>
         </div>
 
+        <!-- Mode Toggle -->
         <div class="image-mode-toggle">
             <label>
                 <input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 News to AI Postcard
@@ -336,11 +341,13 @@
         </div>
 
         <form id="generateForm">
+            <!-- AI Text Prompt Mode -->
             <div class="form-group" id="aiPromptGroup">
                 <label for="theme">Postcard Prompt</label>
                 <input type="text" id="theme" placeholder="Select a headline above..." required>
             </div>
 
+            <!-- Device Upload Mode -->
             <div class="form-group hidden" id="deviceUploadGroup">
                 <label for="imageFileInput">Select Device Photo</label>
                 <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
@@ -361,8 +368,10 @@
 
         <div id="status-message"></div>
 
+        <!-- Hidden canvas for processing -->
         <canvas id="artCanvas" style="display:none;"></canvas>
 
+        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
             
@@ -403,11 +412,14 @@
         let fetchedArticles = [];
         let loadedUserImage = null;
 
-        const ecoKeywords = [
-            "climate", "nature", "earth", "ocean", "forest", "wildlife", "environment", 
-            "weather", "aurora", "renewable", "solar", "wind", "conservation", "eco", 
-            "species", "habitat", "reef", "green", "river", "mountain", "glacier"
-        ];
+        // Specialized keyword dictionaries for specific query searches
+        const keywordMap = {
+            ECO: ["climate", "nature", "earth", "ocean", "forest", "environment", "conservation", "eco"],
+            SUPPLY_CHAIN: ["supply chain", "logistics", "shipping", "freight", "ports", "inventory", "resilience"],
+            MANUFACTURING: ["manufacturing", "factory", "industrial production", "automation", "assembly line", "machinery"],
+            RARE_EARTH: ["rare earth", "critical minerals", "lithium", "cobalt", "neodymium", "rare earth elements", "mining"],
+            MATERIALS: ["advanced materials", "steel", "aluminum", "semiconductors", "composites", "raw materials"]
+        };
 
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
@@ -429,8 +441,8 @@
 
             let rssFeedUrl = "";
 
-            if (category === 'ECO') {
-                const queryStr = ecoKeywords.slice(0, 8).join(" OR ");
+            if (keywordMap[category]) {
+                const queryStr = keywordMap[category].slice(0, 6).map(k => `"${k}"`).join(" OR ");
                 rssFeedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryStr)}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
             } else if (category !== 'all') {
                 rssFeedUrl = `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
@@ -523,7 +535,6 @@
                 sourceLink.href = "#";
             }
 
-            // Reverted back to standard postcard prompt format
             themeInput.value = `A scenic postcard showing ${cleanTitle} in ${countryName}, beautiful landscape, high quality photo, vibrant colors`;
         }
 
@@ -565,7 +576,6 @@
             }
         }
 
-        // Processing Photo Options (Supports Original Image as well as Canvas Filters)
         function processPhotoToArt(style) {
             const canvas = document.getElementById('artCanvas');
             const ctx = canvas.getContext('2d');
@@ -588,7 +598,6 @@
             canvas.height = height;
 
             if (style === 'original') {
-                // Draws original photo untouched
                 ctx.filter = 'none';
                 ctx.drawImage(loadedUserImage, 0, 0, width, height);
             } else if (style === 'ghibli') {
@@ -632,8 +641,11 @@
 
         function useFallbackNews(countryCode, category) {
             const fallbackMap = {
-                ECO: [{ title: "Global Coastal Marine Reef Conservation Network Expands", description: "Environmental groups announce expanded protective zones for coral reefs.", link: "https://news.google.com" }],
-                default: [{ title: "Global Innovation Conference Focuses on Clean Energy", description: "Delegates showcase sustainable engineering solutions across public infrastructure.", link: "https://news.google.com" }]
+                RARE_EARTH: [{ title: "Critical Mineral Processing Hub Expands Regional Operations", description: "Strategic investment accelerates rare earth element refining capacities.", link: "https://news.google.com" }],
+                SUPPLY_CHAIN: [{ title: "Global Freight Networks Implement Resilient Logistics Strategies", description: "Major shipping hubs report increased throughput and optimized routes.", link: "https://news.google.com" }],
+                MANUFACTURING: [{ title: "Smart Manufacturing Plants Adopt Automation at Scale", description: "Advanced industrial facilities enhance output with digital process optimization.", link: "https://news.google.com" }],
+                MATERIALS: [{ title: "Next-Gen Composite Materials Advance High-Performance Infrastructure", description: "Engineers develop sustainable, durable materials for large-scale construction.", link: "https://news.google.com" }],
+                default: [{ title: "Global Innovation Conference Focuses on Industrial Transformation", description: "Delegates showcase sustainable engineering solutions across public infrastructure.", link: "https://news.google.com" }]
             };
 
             fetchedArticles = fallbackMap[category] || fallbackMap['default'];
@@ -734,7 +746,6 @@
                     generateBtn.textContent = 'Generate Postcard Visual';
                 }
             } else {
-                // Photo Upload Mode
                 if (!loadedUserImage) {
                     statusMessage.className = 'error';
                     statusMessage.textContent = '❌ Please select an image file from your device first.';
@@ -782,7 +793,7 @@
             try {
                 if (checkEmail.checked) {
                     statusMessage.textContent = '✉️ Delivering email...';
-                    emailjs.init("nERbog0CqlvyZi4UE");
+                    emailjs.init("nERbog0CqlvyZi4UE M*564761702170or");
                     await emailjs.send("service_kmmyfad", "template_wcnazr9", {
                         to_email: emailInput.value,
                         theme: currentTheme,
