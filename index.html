@@ -236,50 +236,52 @@
 </head>
 <body>
 
-    <!-- STEP 1: REGISTRATION GATEWAY OVERLAY -->
+    <!-- STEP 1: REGISTRATION OVERLAY -->
     <div id="registerOverlay" class="overlay">
         <div class="modal-card" style="max-width: 450px;">
-            <h2>Register to Access Trends</h2>
+            <h2>Register Your Account</h2>
             <p style="font-size: 0.85em; color: #666; margin-bottom: 20px;">
-                Create your account to view live news trends and generate customized AI postcards.
+                Enter your details to register and view available membership plans.
             </p>
             <form id="registerForm">
                 <div class="form-group">
                     <label for="regName">Full Name</label>
-                    <input type="text" id="regName" placeholder="e.g. John Doe" required>
+                    <input type="text" id="regName" placeholder="e.g. Jane Doe" required>
                 </div>
                 <div class="form-group">
                     <label for="regEmail">Email Address</label>
-                    <input type="email" id="regEmail" placeholder="e.g. john@example.com" required>
+                    <input type="email" id="regEmail" placeholder="e.g. jane@example.com" required>
                 </div>
-                <button type="submit">Continue to Select Plan &rarr;</button>
+                <button type="submit">Register & View Tier Plans &rarr;</button>
             </form>
         </div>
     </div>
 
-    <!-- STEP 2: SUBSCRIPTION PLAN OVERLAY -->
+    <!-- STEP 2: SUBSCRIPTION TIER OVERLAY -->
     <div id="pricingOverlay" class="overlay hidden">
         <div class="modal-card">
-            <h2>Select Your Membership Plan</h2>
-            <p style="font-size: 0.85em; color: #666;">Choose a tier below to unlock live trend feeds and postcard creation.</p>
+            <h2>Select a Subscription Plan</h2>
+            <p style="font-size: 0.85em; color: #666;">
+                Subscribe via card to unlock trend feeds and postcard generation. Payments go directly to your linked account.
+            </p>
 
             <div class="pricing-grid">
-                <!-- Tier 1 -->
+                <!-- Tier 1: Free Trial -->
                 <div class="pricing-card">
                     <div>
                         <div class="plan-title">1-Month Free Trial</div>
                         <div class="plan-price">$0 <span>/ 1st month</span></div>
                         <ul class="plan-features">
                             <li>70% Usage Capacity</li>
-                            <li>Access to Live Categorized News</li>
-                            <li>Standard AI Image Generation</li>
+                            <li>Access to Live News Trends</li>
+                            <li>Standard AI Postcard Generation</li>
                             <li>Device Photo Upload Filters</li>
                         </ul>
                     </div>
-                    <button onclick="activateSubscription('Free Trial', 0)" style="background-color: #e2e8f0; color: #333;">Start 1 Month Free</button>
+                    <button onclick="activateSubscription('Free Trial')" style="background-color: #e2e8f0; color: #333;">Start Free Trial</button>
                 </div>
 
-                <!-- Tier 2 -->
+                <!-- Tier 2: Stripe Payment Link -->
                 <div class="pricing-card featured">
                     <div class="badge">Most Popular</div>
                     <div>
@@ -293,10 +295,11 @@
                             <li>Priority News Feed Sync</li>
                         </ul>
                     </div>
-                    <button onclick="processPayment('Full Version ($2/mo)', 'https://checkout.stripe.com/pay/cs_live_sample_tier2')" class="pay-btn">Subscribe for $2/mo</button>
+                    <!-- REPLACE URL WITH YOUR ACTUAL STRIPE PAYMENT LINK FROM STRIPE DASHBOARD -->
+                    <button onclick="redirectToStripe('Full Version ($2/mo)', 'https://buy.stripe.com/28EeVcbHKbZl7WM2uqbMQ01')" class="pay-btn">Pay $2/mo with Card</button>
                 </div>
 
-                <!-- Tier 3 -->
+                <!-- Tier 3: Stripe Payment Link & Custom Enquiry -->
                 <div class="pricing-card">
                     <div>
                         <div class="plan-title">Custom Pro</div>
@@ -305,33 +308,34 @@
                             <li>Full Version Included</li>
                             <li>Unlimited Monthly Generation</li>
                             <li>Tailor-made features for your workflow</li>
-                            <li>Direct Bespoke Customization Request</li>
-                            <li>Dedicated Priority Support</li>
+                            <li>Bespoke Customization Request</li>
+                            <li>Dedicated Support</li>
                         </ul>
                     </div>
                     <div>
-                        <button onclick="processPayment('Custom Pro ($5/mo)', 'https://checkout.stripe.com/pay/cs_live_sample_tier3')" class="pay-btn" style="margin-bottom: 10px; background-color: #117a65; color: #fff;">Subscribe for $5/mo</button>
+                        <!-- REPLACE URL WITH YOUR ACTUAL STRIPE PAYMENT LINK FROM STRIPE DASHBOARD -->
+                        <button onclick="redirectToStripe('Custom Pro ($5/mo)', 'https://buy.stripe.com/aFabJ01365AX3Gw0mibMQ00')" class="pay-btn" style="margin-bottom: 10px; background-color: #117a65; color: #fff;">Pay $5/mo with Card</button>
                         <button onclick="toggleCustomEnquiry()" style="background-color: #f4f7f6; color: #117a65; border: 1px solid #117a65;">Submit Custom Request</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Custom Request Enquiry Form (Tier 3) -->
+            <!-- Custom Enquiry Form (Tier 3) -->
             <div id="customEnquiryBox" class="custom-enquiry-box">
-                <h4 style="margin-top: 0; color: #117a65;">Custom Version Request (Tier 3)</h4>
-                <p style="font-size: 0.85em;">Tell us about the specific custom features or branding integrations you require:</p>
+                <h4 style="margin-top: 0; color: #117a65;">Custom Requirements Request</h4>
+                <p style="font-size: 0.85em;">Tell us what custom features you require:</p>
                 <form id="customEnquiryForm">
                     <div class="form-group">
-                        <label for="custDetails">Custom Requirements / Specific Needs:</label>
-                        <textarea id="custDetails" placeholder="E.g., I need automated API integration with my CRM, branded postcard templates..." required></textarea>
+                        <label for="custDetails">Custom Requirements Details:</label>
+                        <textarea id="custDetails" placeholder="E.g., Automated API integration, custom branding templates..." required></textarea>
                     </div>
-                    <button type="submit" style="background-color: #117a65; color: #fff;">Submit Request & Continue</button>
+                    <button type="submit" style="background-color: #117a65; color: #fff;">Submit Enquiry</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD CONTENT (Locked until subscription) -->
+    <!-- MAIN DASHBOARD -->
     <div class="container">
         <div class="user-status-bar">
             <span id="user-display-name">👤 User: Guest</span>
@@ -341,7 +345,7 @@
         <h2>AI Postcard Creator</h2>
         <p>Filter live news or upload a device photo to generate a custom postcard!</p>
 
-        <!-- Dynamic Live News Feed Section -->
+        <!-- Live News Feed -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -487,34 +491,59 @@
             MATERIALS: ["advanced materials", "steel", "aluminum", "semiconductors", "composites", "raw materials"]
         };
 
-        // USER REGISTRATION & WORKFLOW HANDLERS
+        // Check if user is returning from a Stripe Checkout redirect
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentStatus = urlParams.get('payment');
+            const planParam = urlParams.get('plan');
+            const savedName = localStorage.getItem('registered_name');
+            const savedEmail = localStorage.getItem('registered_email');
+
+            if (savedName && savedEmail) {
+                userData.name = savedName;
+                userData.email = savedEmail;
+                document.getElementById('registerOverlay').classList.add('hidden');
+                
+                if (paymentStatus === 'success') {
+                    activateSubscription(planParam || 'Paid Tier');
+                } else {
+                    document.getElementById('pricingOverlay').classList.remove('hidden');
+                }
+            }
+        });
+
+        // STEP 1: Registration Form Handler
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             userData.name = document.getElementById('regName').value;
             userData.email = document.getElementById('regEmail').value;
             
+            // Persist user registration details
+            localStorage.setItem('registered_name', userData.name);
+            localStorage.setItem('registered_email', userData.email);
+
             document.getElementById('registerOverlay').classList.add('hidden');
             document.getElementById('pricingOverlay').classList.remove('hidden');
         });
 
-        function activateSubscription(planName, price) {
+        // STEP 2: Subscription Activation & Stripe Handling (Option A)
+        function activateSubscription(planName) {
             userData.plan = planName;
             document.getElementById('user-display-name').textContent = `👤 ${userData.name}`;
             document.getElementById('user-plan-badge').textContent = `Plan: ${planName}`;
             
             document.getElementById('pricingOverlay').classList.add('hidden');
-            alert(`Welcome ${userData.name}! Your ${planName} subscription is active.`);
             fetchLiveCountryNews();
         }
 
-        function processPayment(planName, fallbackPaymentUrl) {
-            const checkoutConfirmed = confirm(`You are initiating subscription for ${planName}.\n\nClick OK to simulate Stripe Payment Approval or Cancel to go back.`);
-            
-            if (checkoutConfirmed) {
-                activateSubscription(planName, 0);
-            } else {
-                window.open(fallbackPaymentUrl, '_blank');
+        function redirectToStripe(planName, stripePaymentLink) {
+            if (stripePaymentLink.includes('YOUR_ACTUAL_TIER')) {
+                alert("Please replace 'YOUR_ACTUAL_TIER2_LINK' in the HTML source code with your generated Stripe Payment Link from https://dashboard.stripe.com/payment-links");
+                return;
             }
+
+            // Redirect user directly to Stripe's hosted credit card payment page
+            window.location.href = stripePaymentLink;
         }
 
         function toggleCustomEnquiry() {
@@ -524,11 +553,11 @@
 
         document.getElementById('customEnquiryForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert(`Thank you ${userData.name}! Your custom inquiry has been submitted. Activating your Custom Pro Trial access now.`);
-            activateSubscription('Custom Pro ($5/mo)', 5);
+            alert(`Thank you ${userData.name}! Your enquiry has been received. Unlocking temporary access now.`);
+            activateSubscription('Custom Pro Trial');
         });
 
-        // NEWS FEED & GENERATOR LOGIC
+        // STEP 3: News Feed & App Functionality
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
             const categorySelect = document.getElementById('categorySelect');
@@ -548,7 +577,6 @@
             fetchWeather(lat, lon, capitalName);
 
             let rssFeedUrl = "";
-
             if (keywordMap[category]) {
                 const queryStr = keywordMap[category].slice(0, 6).map(k => `"${k}"`).join(" OR ");
                 rssFeedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryStr)}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
@@ -582,7 +610,7 @@
                 }
             } catch (err) {
                 statusLabel.textContent = "Fallback Active";
-                useFallbackNews(countryCode, category);
+                useFallbackNews();
             }
         }
 
@@ -672,14 +700,13 @@
             return canvas.toDataURL('image/jpeg', 0.9);
         }
 
-        function useFallbackNews(countryCode, category) {
+        function useFallbackNews() {
             fetchedArticles = [{ title: "Global Innovation & Materials Processing Milestone", description: "Strategic investment accelerates sustainable infrastructure transformation.", link: "https://news.google.com" }];
             const headlineSelect = document.getElementById('headlineSelect');
             headlineSelect.innerHTML = '<option value="0">Global Innovation & Materials Processing Milestone</option>';
             handleHeadlineChange();
         }
 
-        // FORM SUBMISSIONS & PREVIEW
         document.getElementById('generateForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const generateBtn = document.getElementById('generateBtn');
