@@ -48,7 +48,7 @@
         let fetchedArticles = [];
         let loadedUserImage = null;
 
-        // Expanded News Categories Map from reference code
+        // Expanded News Categories Map
         const keywordMap = {
             ECO: ["climate", "nature", "earth", "ocean", "forest", "environment", "conservation", "eco"],
             SUPPLY_CHAIN: ["supply chain", "logistics", "shipping", "freight", "ports", "inventory", "resilience"],
@@ -63,38 +63,61 @@
 
         // AUTHENTICATION STATE OBSERVER
         onAuthStateChanged(auth, async (user) => {
+            const mainContainer = document.querySelector('.container');
+            const authOverlay = document.getElementById('authOverlay');
+            const pricingOverlay = document.getElementById('pricingOverlay');
+
             if (user) {
                 currentUser = user;
-                const userRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userRef);
+                try {
+                    const userRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(userRef);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
 
-                    if (data.status === 'deactivated') {
-                        alert("Your account is deactivated. Contact support to reactivate.");
-                        await signOut(auth);
-                        showAuthModal();
-                        return;
-                    }
+                        if (data.status === 'deactivated') {
+                            alert("Your account is deactivated. Contact support to reactivate.");
+                            await signOut(auth);
+                            showAuthModal();
+                            return;
+                        }
 
-                    document.getElementById('user-display-name').textContent = `👤 ${data.fullName || user.email}`;
-                    document.getElementById('user-plan-badge').textContent = `Plan: ${data.subscriptionPlan || 'Inactive'}`;
+                        document.getElementById('user-display-name').textContent = `👤 ${data.fullName || user.email}`;
+                        document.getElementById('user-plan-badge').textContent = `Plan: ${data.subscriptionPlan || 'Inactive'}`;
 
-                    if (data.subscriptionPlan === 'Inactive') {
-                        document.getElementById('authOverlay').classList.add('hidden');
-                        document.getElementById('pricingOverlay').classList.remove('hidden');
+                        if (!data.subscriptionPlan || data.subscriptionPlan === 'Inactive') {
+                            authOverlay.classList.add('hidden');
+                            pricingOverlay.classList.remove('hidden');
+                            mainContainer.classList.add('hidden');
+                        } else {
+                            // User is authenticated and active
+                            authOverlay.classList.add('hidden');
+                            pricingOverlay.classList.add('hidden');
+                            mainContainer.classList.remove('hidden'); // Reveal main app
+                            fetchLiveCountryNews();
+                        }
                     } else {
-                        document.getElementById('authOverlay').classList.add('hidden');
-                        document.getElementById('pricingOverlay').classList.add('hidden');
-                        fetchLiveCountryNews(); // Unlock dashboard
+                        // Fallback if user doc doesn't exist yet
+                        authOverlay.classList.add('hidden');
+                        pricingOverlay.classList.remove('hidden');
+                        mainContainer.classList.add('hidden');
                     }
+                } catch (err) {
+                    console.error("Auth sync error:", err);
+                    showAuthModal();
                 }
             } else {
                 currentUser = null;
                 showAuthModal();
             }
         });
+
+        function showAuthModal() {
+            document.getElementById('authOverlay').classList.remove('hidden');
+            document.getElementById('pricingOverlay').classList.add('hidden');
+            document.querySelector('.container').classList.add('hidden');
+        }
 
         // USER AUTH ACTIONS
         window.handleSignUp = async (e) => {
@@ -165,6 +188,7 @@
             try {
                 await updateDoc(doc(db, "users", currentUser.uid), { subscriptionPlan: planName });
                 document.getElementById('pricingOverlay').classList.add('hidden');
+                document.querySelector('.container').classList.remove('hidden');
                 document.getElementById('user-plan-badge').textContent = `Plan: ${planName}`;
                 fetchLiveCountryNews();
             } catch (error) {
@@ -181,11 +205,6 @@
             window.location.href = link;
         };
 
-        function showAuthModal() {
-            document.getElementById('authOverlay').classList.remove('hidden');
-            document.getElementById('pricingOverlay').classList.add('hidden');
-        }
-
         window.showTab = (tab) => {
             document.getElementById('loginTab').classList.toggle('hidden', tab !== 'login');
             document.getElementById('signUpTab').classList.toggle('hidden', tab !== 'signup');
@@ -198,7 +217,7 @@
         window.toggleCustomEnquiry = () => {
             const box = document.getElementById('customEnquiryBox');
             box.style.display = box.style.display === 'block' ? 'none' : 'block';
-        }
+        };
 
         // -------------------------------------------------------------------------
         // 3. NEWS FEED & GENERATOR LOGIC
@@ -377,7 +396,6 @@
             }
         }
 
-        // Send Form Handlers (Kept from original design)
         function updateSendFormUI() {
             const checkEmail = document.getElementById('checkEmail');
             const checkText = document.getElementById('checkText');
@@ -636,8 +654,8 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div class="container">
+    <!-- MAIN DASHBOARD (Hidden by default to prevent flashing before auth completes) -->
+    <div class="container hidden">
         <div class="user-status-bar">
             <span id="user-display-name">👤 User: Guest</span>
             <span id="user-plan-badge">Plan: Inactive</span>
@@ -653,7 +671,7 @@
 
         <h2>AI Postcard Creator</h2>
 
-        <!-- Expanded Live News Feed from reference code -->
+        <!-- Live News Feed -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -739,7 +757,6 @@
                 <img id="generated-image" src="" alt="Visual">
             </div>
 
-            <!-- Sending form layout from initial design -->
             <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
             <form id="sendForm">
                 <div class="checkbox-group">
