@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI & Canvas Postcard Generator</title>
 
-    <!-- EmailJS SDK (for Enquiry Forms) -->
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <style>
@@ -26,6 +26,19 @@
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
         }
+
+        /* --- LOADER --- */
+        #appLoader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-gold); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- GATEWAY OVERLAY & MODALS --- */
         .overlay {
@@ -115,7 +128,7 @@
         .postcard-preview { background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin-bottom: 25px; }
         .postcard-preview img { width: 100%; height: auto; display: block; min-height: 250px; object-fit: cover; }
         
-        .checkbox-group { display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px; background: #fffdf5; padding: 12px; border-radius: 8px; border: 1px solid #f2e29e; }
+        .checkbox-group { display: flex; justify-around: space-around; gap: 10px; margin-bottom: 20px; background: #fffdf5; padding: 12px; border-radius: 8px; border: 1px solid #f2e29e; }
         .checkbox-group label { display: flex; align-items: center; font-weight: bold; cursor: pointer; margin: 0; font-size: 0.85em; }
 
         .hidden { display: none !important; }
@@ -124,8 +137,14 @@
 </head>
 <body>
 
-    <!-- STEP 1: AUTHENTICATION MODAL (Visible by default to prevent blank screens) -->
-    <div id="authOverlay" class="overlay">
+    <!-- INITIAL INITIALIZATION LOADER -->
+    <div id="appLoader">
+        <div class="spinner"></div>
+        <p style="margin-top:15px; font-size:0.9em; color:#666;">Initializing Application...</p>
+    </div>
+
+    <!-- AUTHENTICATION MODAL -->
+    <div id="authOverlay" class="overlay hidden">
         <div class="modal-card" style="max-width: 400px;">
             <div class="auth-toggle-btns">
                 <button onclick="showTab('login')">Sign In</button>
@@ -168,14 +187,13 @@
         </div>
     </div>
 
-    <!-- STEP 2: SUBSCRIPTION PLAN OVERLAY -->
+    <!-- SUBSCRIPTION PLAN OVERLAY -->
     <div id="pricingOverlay" class="overlay hidden">
         <div class="modal-card">
             <h2>Select Your Membership Plan</h2>
             <p style="font-size: 0.85em; color: #666; margin-bottom:20px;">Choose a tier below to unlock live trend feeds and postcard creation.</p>
 
             <div class="pricing-grid">
-                <!-- Tier 1 -->
                 <div class="pricing-card">
                     <div>
                         <div class="plan-title">1-Month Free Trial</div>
@@ -190,7 +208,6 @@
                     <button onclick="activateSubscriptionInDB('Free Trial')" style="background-color: #e2e8f0; color: #333;">Start 1 Month Free</button>
                 </div>
 
-                <!-- Tier 2 -->
                 <div class="pricing-card featured">
                     <div class="badge">Most Popular</div>
                     <div>
@@ -207,7 +224,6 @@
                     <button onclick="redirectToStripe('tier2')" class="pay-btn">Subscribe for $2/mo</button>
                 </div>
 
-                <!-- Tier 3 -->
                 <div class="pricing-card">
                     <div>
                         <div class="plan-title">Custom Pro</div>
@@ -227,7 +243,6 @@
                 </div>
             </div>
 
-            <!-- Custom Enquiry Form (Tier 3) -->
             <div id="customEnquiryBox" class="custom-enquiry-box">
                 <h4 style="margin-top: 0; color: #117a65;">Custom Requirements Request</h4>
                 <p style="font-size: 0.85em;">Tell us about the specific custom features or branding integrations you require:</p>
@@ -259,7 +274,6 @@
 
         <h2>AI Postcard Creator</h2>
 
-        <!-- Live News Feed -->
         <div class="news-box">
             <div class="news-header">
                 <span>📰 Live Categorized News Stream</span>
@@ -370,7 +384,7 @@
         </div>
     </div>
 
-    <!-- Firebase v10 SDK Module -->
+    <!-- Firebase SDK v10 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
@@ -381,9 +395,6 @@
             getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // -------------------------------------------------------------------------
-        // CONFIGURATION AREA - REPLACE WITH YOUR PROJECT DETAILS
-        // -------------------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyAP07ZvMQCdA2IL-WDve02qXO5WKYXyfuw",
             authDomain: "cdasignup.firebaseapp.com",
@@ -398,7 +409,6 @@
             tier3: "https://buy.stripe.com/aFabJ01365AX3Gw0mibMQ00"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -415,26 +425,33 @@
             MATERIALS: ["advanced materials", "steel", "aluminum", "semiconductors", "composites", "raw materials"]
         };
 
-        // DOM Visibility Handlers
+        function hideInitialLoader() {
+            const loader = document.getElementById('appLoader');
+            if (loader) loader.classList.add('hidden');
+        }
+
         function showAuthModal() {
+            hideInitialLoader();
             document.getElementById('authOverlay').classList.remove('hidden');
             document.getElementById('pricingOverlay').classList.add('hidden');
             document.querySelector('.container').classList.add('hidden');
         }
 
         function showPricingModal() {
+            hideInitialLoader();
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('pricingOverlay').classList.remove('hidden');
             document.querySelector('.container').classList.add('hidden');
         }
 
         function showMainApp() {
+            hideInitialLoader();
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('pricingOverlay').classList.add('hidden');
             document.querySelector('.container').classList.remove('hidden');
         }
 
-        // AUTH OBSERVER
+        // AUTH OBSERVER (Fixed state logic)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -446,7 +463,7 @@
                         const data = docSnap.data();
 
                         if (data.status === 'deactivated') {
-                            alert("Your account is deactivated. Contact support to reactivate.");
+                            alert("Your account is deactivated.");
                             await signOut(auth);
                             showAuthModal();
                             return;
@@ -462,11 +479,12 @@
                             fetchLiveCountryNews();
                         }
                     } else {
+                        // User created in Auth but has no Firestore profile yet
                         showPricingModal();
                     }
                 } catch (err) {
-                    console.error("Auth sync error:", err);
-                    showAuthModal();
+                    console.error("Auth state update error:", err);
+                    showPricingModal();
                 }
             } else {
                 currentUser = null;
@@ -525,7 +543,7 @@
         };
 
         window.deleteAccountPermanently = async () => {
-            if (!currentUser || !confirm("PERMANENT DELETE: This erases your database profile and login access completely. Proceed?")) return;
+            if (!currentUser || !confirm("PERMANENT DELETE: Erase profile and login access?")) return;
             try {
                 const uid = currentUser.uid;
                 await deleteDoc(doc(db, "users", uid));
@@ -533,7 +551,7 @@
                 alert("Account deleted.");
                 showAuthModal();
             } catch (error) {
-                alert(`Deletion failed. Log out and back in, then retry: ${error.message}`);
+                alert(`Deletion failed: ${error.message}`);
             }
         };
 
@@ -572,7 +590,6 @@
             box.style.display = box.style.display === 'block' ? 'none' : 'block';
         };
 
-        // NEWS FEED & GENERATOR
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
             const categorySelect = document.getElementById('categorySelect');
@@ -760,7 +777,6 @@
             document.getElementById('whatsappPhone').required = checkWhatsapp.checked;
         }
 
-        // Attach global functions to window
         window.showTab = showTab;
         window.showAuthModal = showAuthModal;
         window.showPricingModal = showPricingModal;
