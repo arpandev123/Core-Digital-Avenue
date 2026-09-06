@@ -32,142 +32,33 @@
             box-sizing: border-box;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 680px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h2 { margin-top: 0; color: var(--accent-gold); }
-        p { font-size: 0.9em; color: #666; margin-bottom: 15px; }
-
-        .news-box {
-            background: #f4fbf7;
-            border: 1px solid #d4efdf;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .news-header {
-            font-size: 0.75em;
-            font-weight: bold;
-            color: #27ae60;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .select-group {
-            margin-bottom: 12px;
-        }
-
-        .select-group label {
-            font-size: 0.75em;
-            color: #555;
-            display: block;
-            margin-bottom: 4px;
-            font-weight: bold;
-        }
-
-        select {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #a3e4d7;
-            background-color: #fff;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 600;
-            color: var(--accent-green);
-            cursor: pointer;
-        }
-
-        .location-weather-badge {
-            display: flex;
-            justify-content: space-between;
-            background: #e8f8f5;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            font-weight: 600;
-            color: var(--accent-green);
-            margin-top: 10px;
-            gap: 5px;
-        }
-
-        .news-snippet {
-            font-size: 0.85em;
-            color: #555;
-            margin-top: 8px;
-            font-style: italic;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .source-link-container {
-            margin-top: 12px;
-            text-align: right;
-        }
-
-        .source-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.8em;
-            font-weight: bold;
-            color: var(--accent-green);
-            background-color: #d4efdf;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: background-color 0.2s, color 0.2s;
-            width: auto;
-        }
-
-        .source-btn:hover {
-            background-color: var(--accent-green);
-            color: #ffffff;
-        }
-
-        .source-btn.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .image-mode-toggle {
+        /* --- GATEWAY OVERLAY & MODALS --- */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
             display: flex;
             justify-content: center;
-            gap: 15px;
-            background: #fafafa;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
         }
 
-        .image-mode-toggle label {
-            font-size: 0.85em;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .modal-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
+
+        .modal-card h2 { color: var(--accent-gold); margin-top: 0; }
 
         .form-group {
             margin-bottom: 20px;
@@ -191,13 +82,7 @@
             background-color: #fff;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-        }
-
-        input:focus, textarea:focus { border-color: var(--primary-color); outline: none; }
+        textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 
         button, .pay-btn {
             width: 100%;
@@ -219,72 +104,10 @@
         button:hover, .pay-btn:hover { background-color: var(--primary-hover); }
         button:disabled { background-color: #FCF3CF; color: #999; cursor: not-allowed; }
 
-        #preview-section {
-            display: none; 
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px dashed #ddd;
-        }
-
-        .postcard-preview {
-            background: #fff;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
-
-        .postcard-preview img {
-            width: 100%; height: auto; display: block;
-            background-color: #eee; min-height: 250px;
-            object-fit: cover;
-        }
-
-        .checkbox-group {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: #fffdf5;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #f2e29e;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 0;
-            font-size: 0.85em;
-        }
-
-        .checkbox-group input {
-            margin-right: 5px;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: var(--accent-gold);
-        }
-
         /* --- PRICING TIERS SECTION --- */
-        .pricing-section {
-            width: 100%;
-            max-width: 1000px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .pricing-section h2 {
-            font-size: 1.8em;
-            margin-bottom: 5px;
-        }
-
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -293,18 +116,12 @@
             background: #ffffff;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
 
         .pricing-card.featured {
@@ -314,68 +131,101 @@
 
         .badge {
             position: absolute;
-            top: -12px;
-            right: 20px;
-            background: var(--accent-gold);
-            color: #fff;
-            font-size: 0.75em;
-            font-weight: bold;
-            padding: 4px 10px;
-            border-radius: 20px;
+            top: -12px; right: 20px;
+            background: var(--accent-gold); color: #fff;
+            font-size: 0.7em; font-weight: bold;
+            padding: 4px 10px; border-radius: 20px;
             text-transform: uppercase;
         }
 
-        .plan-title {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-
-        .plan-price {
-            font-size: 2.2em;
-            font-weight: bold;
-            color: #117a65;
-            margin-bottom: 15px;
-        }
-
-        .plan-price span {
-            font-size: 0.45em;
-            color: #7f8c8d;
-            font-weight: normal;
-        }
+        .plan-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; color: #2c3e50; }
+        .plan-price { font-size: 2em; font-weight: bold; color: #117a65; margin-bottom: 12px; }
+        .plan-price span { font-size: 0.45em; color: #7f8c8d; font-weight: normal; }
 
         .plan-features {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 25px 0;
-            text-align: left;
-            font-size: 0.9em;
+            list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 0.85em;
         }
-
-        .plan-features li {
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f1f1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .plan-features li::before {
-            content: "✓";
-            color: #27ae60;
-            font-weight: bold;
-        }
+        .plan-features li { padding: 6px 0; border-bottom: 1px solid #f1f1f1; display: flex; align-items: center; gap: 8px; }
+        .plan-features li::before { content: "✓"; color: #27ae60; font-weight: bold; }
 
         .custom-enquiry-box {
-            display: none;
-            background: #f8f9fa;
-            border: 1px dashed #cbd5e1;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            text-align: left;
+            display: none; background: #f8f9fa; border: 1px dashed #cbd5e1;
+            padding: 15px; border-radius: 8px; margin-top: 15px; text-align: left;
         }
+
+        /* --- MAIN DASHBOARD CONTAINER --- */
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%; max-width: 680px;
+            text-align: center; margin-bottom: 40px;
+        }
+
+        .user-status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #e8f8f5; border: 1px solid #a3e4d7;
+            padding: 8px 15px; border-radius: 6px; margin-bottom: 20px;
+            font-size: 0.85em; color: var(--accent-green); font-weight: bold;
+        }
+
+        .news-box {
+            background: #f4fbf7; border: 1px solid #d4efdf;
+            border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: left;
+        }
+
+        .news-header {
+            font-size: 0.75em; font-weight: bold; color: #27ae60;
+            text-transform: uppercase; margin-bottom: 8px;
+            display: flex; justify-content: space-between;
+        }
+
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .select-group { margin-bottom: 12px; }
+        .select-group label { font-size: 0.75em; color: #555; display: block; margin-bottom: 4px; font-weight: bold; }
+
+        select {
+            width: 100%; padding: 8px 10px; border: 1px solid #a3e4d7;
+            background-color: #fff; border-radius: 6px; font-size: 0.85em;
+            font-weight: 600; color: var(--accent-green); cursor: pointer;
+        }
+
+        .location-weather-badge {
+            display: flex; justify-content: space-between; background: #e8f8f5;
+            padding: 6px 10px; border-radius: 6px; font-size: 0.8em;
+            font-weight: 600; color: var(--accent-green); margin-top: 10px; gap: 5px;
+        }
+
+        .news-snippet { font-size: 0.85em; color: #555; margin-top: 8px; font-style: italic; max-height: 80px; overflow-y: auto; }
+        .source-link-container { margin-top: 12px; text-align: right; }
+
+        .source-btn {
+            display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em;
+            font-weight: bold; color: var(--accent-green); background-color: #d4efdf;
+            padding: 6px 12px; border-radius: 4px; text-decoration: none; width: auto;
+        }
+
+        .source-btn.disabled { opacity: 0.5; pointer-events: none; }
+
+        .image-mode-toggle {
+            display: flex; justify-content: center; gap: 15px; background: #fafafa;
+            padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px;
+        }
+
+        .image-mode-toggle label { font-size: 0.85em; font-weight: bold; cursor: pointer; margin: 0; display: flex; align-items: center; gap: 5px; }
+
+        #preview-section { display: none; margin-top: 30px; padding-top: 30px; border-top: 2px dashed #ddd; }
+        .postcard-preview { background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin-bottom: 25px; }
+        .postcard-preview img { width: 100%; height: auto; display: block; background-color: #eee; min-height: 250px; object-fit: cover; }
+
+        .checkbox-group {
+            display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px;
+            background: #fffdf5; padding: 12px; border-radius: 8px; border: 1px solid #f2e29e;
+        }
+
+        .checkbox-group label { display: flex; align-items: center; font-weight: bold; cursor: pointer; margin: 0; font-size: 0.85em; }
+        .checkbox-group input { margin-right: 5px; width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-gold); }
 
         .hidden { display: none !important; }
         #status-message { margin-top: 20px; font-weight: bold; font-size: 0.9em; min-height: 20px; }
@@ -386,8 +236,108 @@
 </head>
 <body>
 
-    <!-- MAIN GENERATOR CONTAINER -->
+    <!-- STEP 1: REGISTRATION GATEWAY OVERLAY -->
+    <div id="registerOverlay" class="overlay">
+        <div class="modal-card" style="max-width: 450px;">
+            <h2>Register to Access Trends</h2>
+            <p style="font-size: 0.85em; color: #666; margin-bottom: 20px;">
+                Create your account to view live news trends and generate customized AI postcards.
+            </p>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regName">Full Name</label>
+                    <input type="text" id="regName" placeholder="e.g. John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email Address</label>
+                    <input type="email" id="regEmail" placeholder="e.g. john@example.com" required>
+                </div>
+                <button type="submit">Continue to Select Plan &rarr;</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- STEP 2: SUBSCRIPTION PLAN OVERLAY -->
+    <div id="pricingOverlay" class="overlay hidden">
+        <div class="modal-card">
+            <h2>Select Your Membership Plan</h2>
+            <p style="font-size: 0.85em; color: #666;">Choose a tier below to unlock live trend feeds and postcard creation.</p>
+
+            <div class="pricing-grid">
+                <!-- Tier 1 -->
+                <div class="pricing-card">
+                    <div>
+                        <div class="plan-title">1-Month Free Trial</div>
+                        <div class="plan-price">$0 <span>/ 1st month</span></div>
+                        <ul class="plan-features">
+                            <li>70% Usage Capacity</li>
+                            <li>Access to Live Categorized News</li>
+                            <li>Standard AI Image Generation</li>
+                            <li>Device Photo Upload Filters</li>
+                        </ul>
+                    </div>
+                    <button onclick="activateSubscription('Free Trial', 0)" style="background-color: #e2e8f0; color: #333;">Start 1 Month Free</button>
+                </div>
+
+                <!-- Tier 2 -->
+                <div class="pricing-card featured">
+                    <div class="badge">Most Popular</div>
+                    <div>
+                        <div class="plan-title">Full Version</div>
+                        <div class="plan-price">$2 <span>/ month</span></div>
+                        <ul class="plan-features">
+                            <li>100% Full Usage Capacity</li>
+                            <li>Unlimited Postcard Generation</li>
+                            <li>High-Resolution AI Rendering</li>
+                            <li>Direct Email, SMS & WhatsApp Sending</li>
+                            <li>Priority News Feed Sync</li>
+                        </ul>
+                    </div>
+                    <button onclick="processPayment('Full Version ($2/mo)', 'https://checkout.stripe.com/pay/cs_live_sample_tier2')" class="pay-btn">Subscribe for $2/mo</button>
+                </div>
+
+                <!-- Tier 3 -->
+                <div class="pricing-card">
+                    <div>
+                        <div class="plan-title">Custom Pro</div>
+                        <div class="plan-price">$5 <span>/ month</span></div>
+                        <ul class="plan-features">
+                            <li>Full Version Included</li>
+                            <li>Unlimited Monthly Generation</li>
+                            <li>Tailor-made features for your workflow</li>
+                            <li>Direct Bespoke Customization Request</li>
+                            <li>Dedicated Priority Support</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button onclick="processPayment('Custom Pro ($5/mo)', 'https://checkout.stripe.com/pay/cs_live_sample_tier3')" class="pay-btn" style="margin-bottom: 10px; background-color: #117a65; color: #fff;">Subscribe for $5/mo</button>
+                        <button onclick="toggleCustomEnquiry()" style="background-color: #f4f7f6; color: #117a65; border: 1px solid #117a65;">Submit Custom Request</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Request Enquiry Form (Tier 3) -->
+            <div id="customEnquiryBox" class="custom-enquiry-box">
+                <h4 style="margin-top: 0; color: #117a65;">Custom Version Request (Tier 3)</h4>
+                <p style="font-size: 0.85em;">Tell us about the specific custom features or branding integrations you require:</p>
+                <form id="customEnquiryForm">
+                    <div class="form-group">
+                        <label for="custDetails">Custom Requirements / Specific Needs:</label>
+                        <textarea id="custDetails" placeholder="E.g., I need automated API integration with my CRM, branded postcard templates..." required></textarea>
+                    </div>
+                    <button type="submit" style="background-color: #117a65; color: #fff;">Submit Request & Continue</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT (Locked until subscription) -->
     <div class="container">
+        <div class="user-status-bar">
+            <span id="user-display-name">👤 User: Guest</span>
+            <span id="user-plan-badge">Plan: Inactive</span>
+        </div>
+
         <h2>AI Postcard Creator</h2>
         <p>Filter live news or upload a device photo to generate a custom postcard!</p>
 
@@ -463,13 +413,11 @@
         </div>
 
         <form id="generateForm">
-            <!-- AI Text Prompt Mode -->
             <div class="form-group" id="aiPromptGroup">
                 <label for="theme">Postcard Prompt</label>
                 <input type="text" id="theme" placeholder="Select a headline above..." required>
             </div>
 
-            <!-- Device Upload Mode -->
             <div class="form-group hidden" id="deviceUploadGroup">
                 <label for="imageFileInput">Select Device Photo</label>
                 <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
@@ -489,14 +437,10 @@
         </form>
 
         <div id="status-message"></div>
-
-        <!-- Hidden canvas for processing -->
         <canvas id="artCanvas" style="display:none;"></canvas>
 
-        <!-- Step 2: Preview & Send -->
         <div id="preview-section">
             <h3>Your Postcard Preview</h3>
-            
             <div class="postcard-preview">
                 <img id="generated-image" src="" alt="Postcard Visual">
             </div>
@@ -530,93 +474,11 @@
         </div>
     </div>
 
-    <!-- SUBSCRIPTION PRICING TIERS SECTION -->
-    <div class="pricing-section">
-        <h2>Choose Your Membership Plan</h2>
-        <p>Select a flexible plan that suits your creative or business needs</p>
-
-        <div class="pricing-grid">
-            <!-- Tier 1 -->
-            <div class="pricing-card">
-                <div>
-                    <div class="plan-title">1-Month Trial</div>
-                    <div class="plan-price">$0 <span>/ 1st month</span></div>
-                    <ul class="plan-features">
-                        <li>70% Full Monthly Usage Capacity</li>
-                        <li>Access to Live Categorized News</li>
-                        <li>Standard Image Generation</li>
-                        <li>Device Photo Upload Filters</li>
-                    </ul>
-                </div>
-                <button onclick="selectTier('Free Trial')" style="background-color: #e2e8f0; color: #333;">Start 1 Month Free</button>
-            </div>
-
-            <!-- Tier 2 -->
-            <div class="pricing-card featured">
-                <div class="badge">Most Popular</div>
-                <div>
-                    <div class="plan-title">Full Version</div>
-                    <div class="plan-price">$2 <span>/ month</span></div>
-                    <ul class="plan-features">
-                        <li>100% Full Usage Capacity</li>
-                        <li>Unlimited Postcard Generation</li>
-                        <li>High-Resolution AI Rendering</li>
-                        <li>Direct Email, SMS & WhatsApp Sending</li>
-                        <li>Priority News Feed Sync</li>
-                    </ul>
-                </div>
-                <!-- Replace 'YOUR_STRIPE_OR_PAYPAL_LINK_TIER_2' with your actual checkout URL -->
-                <a href="https://buy.stripe.com/test_tier2_link" target="_blank" class="pay-btn">Subscribe for $2/mo</a>
-            </div>
-
-            <!-- Tier 3 -->
-            <div class="pricing-card">
-                <div>
-                    <div class="plan-title">Custom Pro</div>
-                    <div class="plan-price">$5 <span>/ month</span></div>
-                    <ul class="plan-features">
-                        <li>Full Version Included</li>
-                        <li>Unlimited Monthly Generation</li>
-                        <li>Tailor-made features for your workflow</li>
-                        <li>Direct Bespoke Customization Request</li>
-                        <li>Dedicated Priority Support</li>
-                    </ul>
-                </div>
-                <div>
-                    <!-- Payment link for Tier 3 -->
-                    <a href="https://buy.stripe.com/test_tier3_link" target="_blank" class="pay-btn" style="margin-bottom: 10px; background-color: #117a65; color: #fff;">Subscribe for $5/mo</a>
-                    <button onclick="toggleCustomEnquiry()" style="background-color: #f4f7f6; color: #117a65; border: 1px solid #117a65;">Submit Custom Request</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Custom Request Enquiry Form (Tier 3 Flexibility) -->
-        <div id="customEnquiryBox" class="custom-enquiry-box">
-            <h4 style="margin-top: 0; color: #117a65;">Custom Version Request (Tier 3)</h4>
-            <p style="font-size: 0.85em;">Tell us about the specific custom features, brand styling, or integrations you need for your solution:</p>
-            <form id="customEnquiryForm">
-                <div class="form-group">
-                    <label for="custName">Your Name:</label>
-                    <input type="text" id="custName" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label for="custEmail">Your Email:</label>
-                    <input type="email" id="custEmail" placeholder="john@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="custDetails">Custom Requirements / Specific Needs:</label>
-                    <textarea id="custDetails" placeholder="E.g., I need automated API integration with my CRM, branded postcard templates, custom domain..." required></textarea>
-                </div>
-                <button type="submit" style="background-color: #117a65; color: #fff;">Send Custom Enquiry</button>
-            </form>
-        </div>
-    </div>
-
     <script>
+        let userData = { name: '', email: '', plan: '' };
         let fetchedArticles = [];
         let loadedUserImage = null;
 
-        // Specialized keyword dictionaries for specific query searches
         const keywordMap = {
             ECO: ["climate", "nature", "earth", "ocean", "forest", "environment", "conservation", "eco"],
             SUPPLY_CHAIN: ["supply chain", "logistics", "shipping", "freight", "ports", "inventory", "resilience"],
@@ -625,6 +487,48 @@
             MATERIALS: ["advanced materials", "steel", "aluminum", "semiconductors", "composites", "raw materials"]
         };
 
+        // USER REGISTRATION & WORKFLOW HANDLERS
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            userData.name = document.getElementById('regName').value;
+            userData.email = document.getElementById('regEmail').value;
+            
+            document.getElementById('registerOverlay').classList.add('hidden');
+            document.getElementById('pricingOverlay').classList.remove('hidden');
+        });
+
+        function activateSubscription(planName, price) {
+            userData.plan = planName;
+            document.getElementById('user-display-name').textContent = `👤 ${userData.name}`;
+            document.getElementById('user-plan-badge').textContent = `Plan: ${planName}`;
+            
+            document.getElementById('pricingOverlay').classList.add('hidden');
+            alert(`Welcome ${userData.name}! Your ${planName} subscription is active.`);
+            fetchLiveCountryNews();
+        }
+
+        function processPayment(planName, fallbackPaymentUrl) {
+            const checkoutConfirmed = confirm(`You are initiating subscription for ${planName}.\n\nClick OK to simulate Stripe Payment Approval or Cancel to go back.`);
+            
+            if (checkoutConfirmed) {
+                activateSubscription(planName, 0);
+            } else {
+                window.open(fallbackPaymentUrl, '_blank');
+            }
+        }
+
+        function toggleCustomEnquiry() {
+            const box = document.getElementById('customEnquiryBox');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        }
+
+        document.getElementById('customEnquiryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert(`Thank you ${userData.name}! Your custom inquiry has been submitted. Activating your Custom Pro Trial access now.`);
+            activateSubscription('Custom Pro ($5/mo)', 5);
+        });
+
+        // NEWS FEED & GENERATOR LOGIC
         async function fetchLiveCountryNews() {
             const countrySelect = document.getElementById('countrySelect');
             const categorySelect = document.getElementById('categorySelect');
@@ -667,8 +571,7 @@
                     fetchedArticles.forEach((item, index) => {
                         const opt = document.createElement('option');
                         opt.value = index;
-                        const cleanTitle = item.title.replace(/ - [^-]+$/, '');
-                        opt.textContent = cleanTitle;
+                        opt.textContent = item.title.replace(/ - [^-]+$/, '');
                         headlineSelect.appendChild(opt);
                     });
 
@@ -678,7 +581,6 @@
                     throw new Error("No items returned");
                 }
             } catch (err) {
-                console.warn("Live RSS fetch failed, loading fallback data", err);
                 statusLabel.textContent = "Fallback Active";
                 useFallbackNews(countryCode, category);
             }
@@ -689,16 +591,12 @@
             const weatherEl = document.getElementById('country-weather');
 
             locationEl.textContent = `📍 Location: ${capitalName}`;
-            weatherEl.textContent = `🌤️ Weather: Fetching...`;
-
             try {
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m`);
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m`);
                 const weatherData = await weatherRes.json();
                 
                 if (weatherData && weatherData.current) {
-                    const temp = weatherData.current.temperature_2m;
-                    const wind = weatherData.current.wind_speed_10m;
-                    weatherEl.textContent = `🌤️ ${temp}°C, Wind ${wind} km/h`;
+                    weatherEl.textContent = `🌤️ ${weatherData.current.temperature_2m}°C, Wind ${weatherData.current.wind_speed_10m} km/h`;
                 } else {
                     weatherEl.textContent = `🌤️ Climate: Active`;
                 }
@@ -715,28 +613,19 @@
             const sourceLink = document.getElementById('source-link');
             
             const countryName = countrySelect.options[countrySelect.selectedIndex].text.split(' ')[0];
-
             const idx = headlineSelect.value;
-            if (idx === "" || !fetchedArticles[idx]) {
-                sourceLink.classList.add('disabled');
-                sourceLink.href = "#";
-                return;
-            }
+            if (idx === "" || !fetchedArticles[idx]) return;
 
             const article = fetchedArticles[idx];
-            
             const cleanTitle = article.title.replace(/ - [^-]+$/, '');
             const rawDescription = article.description || article.content || cleanTitle;
             const cleanSnippet = rawDescription.replace(/<[^>]*>?/gm, '');
 
             snippetBox.textContent = cleanSnippet.length > 150 ? cleanSnippet.substring(0, 150) + "..." : cleanSnippet;
             
-            if (article.link || article.guid) {
-                sourceLink.href = article.link || article.guid;
+            if (article.link) {
+                sourceLink.href = article.link;
                 sourceLink.classList.remove('disabled');
-            } else {
-                sourceLink.classList.add('disabled');
-                sourceLink.href = "#";
             }
 
             themeInput.value = `A scenic postcard showing ${cleanTitle} in ${countryName}, beautiful landscape, high quality photo, vibrant colors`;
@@ -744,324 +633,87 @@
 
         function toggleImageSourceMode() {
             const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
-            const aiPromptGroup = document.getElementById('aiPromptGroup');
-            const deviceUploadGroup = document.getElementById('deviceUploadGroup');
-            const generateBtn = document.getElementById('generateBtn');
-
-            if (isAi) {
-                aiPromptGroup.classList.remove('hidden');
-                deviceUploadGroup.classList.add('hidden');
-                document.getElementById('theme').required = true;
-                document.getElementById('imageFileInput').required = false;
-                generateBtn.textContent = 'Generate Postcard Visual';
-            } else {
-                aiPromptGroup.classList.add('hidden');
-                deviceUploadGroup.classList.remove('hidden');
-                document.getElementById('theme').required = false;
-                document.getElementById('imageFileInput').required = true;
-                generateBtn.textContent = 'Use Selected Photo';
-            }
+            document.getElementById('aiPromptGroup').classList.toggle('hidden', !isAi);
+            document.getElementById('deviceUploadGroup').classList.toggle('hidden', isAi);
+            document.getElementById('theme').required = isAi;
+            document.getElementById('imageFileInput').required = !isAi;
         }
 
         function handleDeviceFileSelect(event) {
             const file = event.target.files[0];
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = (e) => {
                     const img = new Image();
-                    img.onload = function() {
-                        loadedUserImage = img;
-                    };
+                    img.onload = () => { loadedUserImage = img; };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
-            } else {
-                loadedUserImage = null;
             }
         }
 
         function processPhotoToArt(style) {
             const canvas = document.getElementById('artCanvas');
             const ctx = canvas.getContext('2d');
-
             const maxDim = 800;
             let width = loadedUserImage.width;
             let height = loadedUserImage.height;
 
             if (width > maxDim || height > maxDim) {
-                if (width > height) {
-                    height = Math.round((height * maxDim) / width);
-                    width = maxDim;
-                } else {
-                    width = Math.round((width * maxDim) / height);
-                    height = maxDim;
-                }
+                if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+                else { width = Math.round((width * maxDim) / height); height = maxDim; }
             }
 
-            canvas.width = width;
-            canvas.height = height;
-
-            if (style === 'original') {
-                ctx.filter = 'none';
-                ctx.drawImage(loadedUserImage, 0, 0, width, height);
-            } else if (style === 'ghibli') {
-                ctx.filter = 'saturate(180%) contrast(115%) brightness(105%) sepia(15%)';
-                ctx.drawImage(loadedUserImage, 0, 0, width, height);
-
-                const imgData = ctx.getImageData(0, 0, width, height);
-                const data = imgData.data;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    data[i] = Math.min(255, data[i] * 1.05);
-                    data[i+1] = Math.min(255, data[i+1] * 1.08);
-                    data[i+2] = Math.min(255, data[i+2] * 0.95);
-                }
-                ctx.putImageData(imgData, 0, 0);
-            } else if (style === 'posterize') {
-                ctx.filter = 'saturate(200%) contrast(140%)';
-                ctx.drawImage(loadedUserImage, 0, 0, width, height);
-
-                const imgData = ctx.getImageData(0, 0, width, height);
-                const data = imgData.data;
-                const levels = 5;
-                const step = 255 / levels;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    data[i] = Math.floor(data[i] / step) * step;
-                    data[i+1] = Math.floor(data[i+1] / step) * step;
-                    data[i+2] = Math.floor(data[i+2] / step) * step;
-                }
-                ctx.putImageData(imgData, 0, 0);
-            } else if (style === 'sketch') {
-                ctx.filter = 'grayscale(100%) contrast(200%) brightness(120%)';
-                ctx.drawImage(loadedUserImage, 0, 0, width, height);
-            } else if (style === 'oil') {
-                ctx.filter = 'saturate(150%) contrast(120%) blur(1px)';
-                ctx.drawImage(loadedUserImage, 0, 0, width, height);
-            }
-
+            canvas.width = width; canvas.height = height;
+            ctx.filter = style === 'ghibli' ? 'saturate(180%) contrast(115%)' : 
+                        style === 'posterize' ? 'saturate(200%) contrast(140%)' :
+                        style === 'sketch' ? 'grayscale(100%) contrast(200%)' : 'none';
+            ctx.drawImage(loadedUserImage, 0, 0, width, height);
             return canvas.toDataURL('image/jpeg', 0.9);
         }
 
         function useFallbackNews(countryCode, category) {
-            const fallbackMap = {
-                RARE_EARTH: [{ title: "Critical Mineral Processing Hub Expands Regional Operations", description: "Strategic investment accelerates rare earth element refining capacities.", link: "https://news.google.com" }],
-                SUPPLY_CHAIN: [{ title: "Global Freight Networks Implement Resilient Logistics Strategies", description: "Major shipping hubs report increased throughput and optimized routes.", link: "https://news.google.com" }],
-                MANUFACTURING: [{ title: "Smart Manufacturing Plants Adopt Automation at Scale", description: "Advanced industrial facilities enhance output with digital process optimization.", link: "https://news.google.com" }],
-                MATERIALS: [{ title: "Next-Gen Composite Materials Advance High-Performance Infrastructure", description: "Engineers develop sustainable, durable materials for large-scale construction.", link: "https://news.google.com" }],
-                default: [{ title: "Global Innovation Conference Focuses on Industrial Transformation", description: "Delegates showcase sustainable engineering solutions across public infrastructure.", link: "https://news.google.com" }]
-            };
-
-            fetchedArticles = fallbackMap[category] || fallbackMap['default'];
+            fetchedArticles = [{ title: "Global Innovation & Materials Processing Milestone", description: "Strategic investment accelerates sustainable infrastructure transformation.", link: "https://news.google.com" }];
             const headlineSelect = document.getElementById('headlineSelect');
-            headlineSelect.innerHTML = '';
-            
-            fetchedArticles.forEach((item, index) => {
-                const opt = document.createElement('option');
-                opt.value = index;
-                opt.textContent = item.title;
-                headlineSelect.appendChild(opt);
-            });
+            headlineSelect.innerHTML = '<option value="0">Global Innovation & Materials Processing Milestone</option>';
             handleHeadlineChange();
         }
 
-        /* --- Pricing & Custom Enquiry Logic --- */
-        function selectTier(planName) {
-            alert(`You have selected the ${planName} Plan! Your 1-month trial with 70% usage capacity is active.`);
-        }
-
-        function toggleCustomEnquiry() {
-            const box = document.getElementById('customEnquiryBox');
-            box.style.display = box.style.display === 'block' ? 'none' : 'block';
-            if (box.style.display === 'block') {
-                box.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        document.getElementById('customEnquiryForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('custName').value;
-            alert(`Thank you, ${name}! Your custom version inquiry has been submitted. Our team will get in touch via email.`);
-            this.reset();
-            document.getElementById('customEnquiryBox').style.display = 'none';
-        });
-
-        window.addEventListener('DOMContentLoaded', fetchLiveCountryNews);
-
-        // Core App Logic
-        const generateForm = document.getElementById('generateForm');
-        const sendForm = document.getElementById('sendForm');
-        const previewSection = document.getElementById('preview-section');
-        const statusMessage = document.getElementById('status-message');
-        
-        const checkEmail = document.getElementById('checkEmail');
-        const checkText = document.getElementById('checkText');
-        const checkWhatsapp = document.getElementById('checkWhatsapp');
-        
-        const emailGroup = document.getElementById('emailGroup');
-        const phoneGroup = document.getElementById('phoneGroup');
-        const whatsappGroup = document.getElementById('whatsappGroup');
-        
-        const sendBtn = document.getElementById('sendBtn');
-        const emailInput = document.getElementById('email');
-        const phoneInput = document.getElementById('phone');
-        const whatsappInput = document.getElementById('whatsappPhone');
-
-        let currentTheme = "";
-
-        function updateFormUI() {
-            emailGroup.classList.toggle('hidden', !checkEmail.checked);
-            phoneGroup.classList.toggle('hidden', !checkText.checked);
-            whatsappGroup.classList.toggle('hidden', !checkWhatsapp.checked);
-            
-            emailInput.required = checkEmail.checked;
-            phoneInput.required = checkText.checked;
-            whatsappInput.required = checkWhatsapp.checked;
-            
-            const activeCount = [checkEmail.checked, checkText.checked, checkWhatsapp.checked].filter(Boolean).length;
-            
-            if (activeCount === 0) {
-                sendBtn.textContent = 'Select an option above';
-                sendBtn.disabled = true;
-            } else if (activeCount > 1) {
-                sendBtn.textContent = 'Send via Multiple Channels';
-                sendBtn.disabled = false;
-            } else {
-                if (checkEmail.checked) sendBtn.textContent = 'Send Email';
-                if (checkText.checked) sendBtn.textContent = 'Send SMS';
-                if (checkWhatsapp.checked) sendBtn.textContent = 'Share via WhatsApp';
-                sendBtn.disabled = false;
-            }
-        }
-
-        checkEmail.addEventListener('change', updateFormUI);
-        checkText.addEventListener('change', updateFormUI);
-        checkWhatsapp.addEventListener('change', updateFormUI);
-
-        generateForm.addEventListener('submit', async function(e) {
+        // FORM SUBMISSIONS & PREVIEW
+        document.getElementById('generateForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const generateBtn = document.getElementById('generateBtn');
             const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
             const imgEl = document.getElementById('generated-image');
+            const statusMessage = document.getElementById('status-message');
 
             generateBtn.disabled = true;
             statusMessage.className = 'loading';
-            previewSection.style.display = 'none';
+            statusMessage.textContent = '🎨 Rendering postcard visual...';
 
             if (isAi) {
-                currentTheme = document.getElementById('theme').value;
-                generateBtn.textContent = 'Rendering Postcard...';
-                statusMessage.textContent = '🎨 Rendering postcard visual...';
-
-                try {
-                    const seed = Math.floor(Math.random() * 1000000);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme)}?width=512&height=384&seed=${seed}&nologo=true`;
-                    
-                    imgEl.src = imageUrl;
-                    imgEl.onload = () => {
-                        statusMessage.textContent = '';
-                        previewSection.style.display = 'block';
-                        generateBtn.disabled = false;
-                        generateBtn.textContent = 'Generate Postcard Visual';
-                    };
-                } catch (error) {
-                    statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Failed to render postcard visual.';
+                const currentTheme = document.getElementById('theme').value;
+                const seed = Math.floor(Math.random() * 1000000);
+                imgEl.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentTheme)}?width=512&height=384&seed=${seed}&nologo=true`;
+                imgEl.onload = () => {
+                    statusMessage.textContent = '';
+                    document.getElementById('preview-section').style.display = 'block';
                     generateBtn.disabled = false;
-                    generateBtn.textContent = 'Generate Postcard Visual';
-                }
+                };
             } else {
                 if (!loadedUserImage) {
                     statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Please select an image file from your device first.';
+                    statusMessage.textContent = '❌ Please select a device photo first.';
                     generateBtn.disabled = false;
                     return;
                 }
-
-                try {
-                    generateBtn.textContent = 'Preparing Photo...';
-                    statusMessage.textContent = '⚙️ Preparing photo for preview...';
-
-                    const selectedStyle = document.getElementById('artStyleSelect').value;
-                    const resultDataUrl = processPhotoToArt(selectedStyle);
-
-                    currentTheme = "Uploaded Photo Postcard";
-
-                    imgEl.src = resultDataUrl;
-                    imgEl.onload = () => {
-                        statusMessage.textContent = '';
-                        previewSection.style.display = 'block';
-                        generateBtn.disabled = false;
-                        generateBtn.textContent = 'Use Selected Photo';
-                    };
-                } catch (error) {
-                    console.error(error);
-                    statusMessage.className = 'error';
-                    statusMessage.textContent = '❌ Error preparing image.';
-                    generateBtn.disabled = false;
-                    generateBtn.textContent = 'Use Selected Photo';
-                }
-            }
-        });
-
-        sendForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            sendBtn.disabled = true;
-            sendBtn.textContent = 'Processing...';
-            statusMessage.className = 'loading';
-            
-            const imageUrl = document.getElementById('generated-image').src;
-            let successMessage = "";
-            let whatsappUrlToOpen = null;
-            let smsUrlToOpen = null;
-
-            try {
-                if (checkEmail.checked) {
-                    statusMessage.textContent = '✉️ Delivering email...';
-                    emailjs.init("nERbog0CqlvyZi4UE M*564761702170or");
-                    await emailjs.send("service_kmmyfad", "template_wcnazr9", {
-                        to_email: emailInput.value,
-                        theme: currentTheme,
-                        image_url: imageUrl
-                    });
-                    successMessage += `✨ Email sent! `;
-                }
-
-                if (checkText.checked) {
-                    const phone = phoneInput.value;
-                    const smsBody = `Check out my postcard: ${imageUrl}`;
-                    smsUrlToOpen = `sms:${phone}?body=${encodeURIComponent(smsBody)}`;
-                    successMessage += `📱 SMS app opened! `;
-                }
-
-                if (checkWhatsapp.checked) {
-                    const waPhone = whatsappInput.value.replace(/\D/g,'');
-                    whatsappUrlToOpen = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(imageUrl)}`;
-                    successMessage += `💬 WhatsApp ready! `;
-                }
-
-                statusMessage.className = 'success';
-                statusMessage.textContent = successMessage || 'Success!';
-                
-                if (smsUrlToOpen) {
-                    setTimeout(() => { window.location.href = smsUrlToOpen; }, 400);
-                }
-                if (whatsappUrlToOpen) {
-                    setTimeout(() => { window.open(whatsappUrlToOpen, '_blank'); }, 800);
-                }
-
-                setTimeout(() => {
-                    sendForm.reset();
-                    updateFormUI();
-                    previewSection.style.display = 'none';
+                const resultDataUrl = processPhotoToArt(document.getElementById('artStyleSelect').value);
+                imgEl.src = resultDataUrl;
+                imgEl.onload = () => {
                     statusMessage.textContent = '';
-                }, 4000);
-
-            } catch (error) {
-                statusMessage.className = 'error';
-                statusMessage.textContent = '❌ Delivery error. Check your settings.';
-                console.error(error);
-                updateFormUI();
+                    document.getElementById('preview-section').style.display = 'block';
+                    generateBtn.disabled = false;
+                };
             }
         });
     </script>
