@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI & Canvas Postcard Generator</title>
 
+    <!-- EmailJS SDK (for Enquiry Forms) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- Firebase v10 SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
@@ -15,7 +19,11 @@
             getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // REPLACE WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
+        // -------------------------------------------------------------------------
+        // 1. CONFIGURATION AREA - REPLACE WITH YOUR PROJECT DETAILS
+        // -------------------------------------------------------------------------
+
+        // A. REPLACE WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
         const firebaseConfig = {
             apiKey: "AIzaSyAP07ZvMQCdA2IL-WDve02qXO5WKYXyfuw",
             authDomain: "cdasignup.firebaseapp.com",
@@ -25,13 +33,35 @@
             appId: "1:895237120356:web:487f649776f6f530f3da71"
         };
 
+        // B. STRIPE PAYMENT LINKS FROM YOUR STRIPE DASHBOARD
+        const STRIPE_LINKS = {
+            tier2: "https://buy.stripe.com/28EeVcbHKbZl7WM2uqbMQ01",
+            tier3: "https://buy.stripe.com/aFabJ01365AX3Gw0mibMQ00"
+        };
+
+        // Initialize Firebase Services
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         let currentUser = null;
+        let fetchedArticles = [];
+        let loadedUserImage = null;
 
-        // AUTHENTICATION OBSERVER
+        // Expanded News Categories Map from reference code
+        const keywordMap = {
+            ECO: ["climate", "nature", "earth", "ocean", "forest", "environment", "conservation", "eco"],
+            SUPPLY_CHAIN: ["supply chain", "logistics", "shipping", "freight", "ports", "inventory", "resilience"],
+            MANUFACTURING: ["manufacturing", "factory", "industrial production", "automation", "assembly line", "machinery"],
+            RARE_EARTH: ["rare earth", "critical minerals", "lithium", "cobalt", "neodymium", "rare earth elements", "mining"],
+            MATERIALS: ["advanced materials", "steel", "aluminum", "semiconductors", "composites", "raw materials"]
+        };
+
+        // -------------------------------------------------------------------------
+        // 2. AUTHENTICATION & DATABASE SYNC LOGIC
+        // -------------------------------------------------------------------------
+
+        // AUTHENTICATION STATE OBSERVER
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -57,7 +87,7 @@
                     } else {
                         document.getElementById('authOverlay').classList.add('hidden');
                         document.getElementById('pricingOverlay').classList.add('hidden');
-                        fetchLiveCountryNews();
+                        fetchLiveCountryNews(); // Unlock dashboard
                     }
                 }
             } else {
@@ -105,6 +135,7 @@
             showAuthModal();
         };
 
+        // ACCOUNT MANAGEMENT FUNCTIONS
         window.deactivateAccount = async () => {
             if (!currentUser || !confirm("Deactivate your account? You will be logged out.")) return;
             try {
@@ -128,6 +159,7 @@
             }
         };
 
+        // SUBSCRIPTION & PAYMENT REDIRECTION
         window.activateSubscriptionInDB = async (planName) => {
             if (!currentUser) return;
             try {
@@ -140,12 +172,13 @@
             }
         };
 
-        window.redirectToStripe = (planName, stripeLink) => {
-            if (stripeLink.includes('YOUR_ACTUAL_TIER')) {
-                alert("Replace placeholder Stripe URLs with your payment links from Dashboard.");
+        window.redirectToStripe = (tierKey) => {
+            const link = STRIPE_LINKS[tierKey];
+            if (!link || link.includes('YOUR_ACTUAL_TIER')) {
+                alert("Replace placeholder Stripe URLs in the JS source code with your actual Payment Links.");
                 return;
             }
-            window.location.href = stripeLink;
+            window.location.href = link;
         };
 
         function showAuthModal() {
@@ -161,6 +194,212 @@
         window.toggleSettingsMenu = () => {
             document.getElementById('accountSettingsMenu').classList.toggle('hidden');
         };
+
+        window.toggleCustomEnquiry = () => {
+            const box = document.getElementById('customEnquiryBox');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // -------------------------------------------------------------------------
+        // 3. NEWS FEED & GENERATOR LOGIC
+        // -------------------------------------------------------------------------
+
+        async function fetchLiveCountryNews() {
+            const countrySelect = document.getElementById('countrySelect');
+            const categorySelect = document.getElementById('categorySelect');
+            const headlineSelect = document.getElementById('headlineSelect');
+            const statusLabel = document.getElementById('news-status');
+            const selectedOpt = countrySelect.options[countrySelect.selectedIndex];
+
+            const countryCode = countrySelect.value;
+            const category = categorySelect.value;
+            const lat = selectedOpt.getAttribute('data-lat');
+            const lon = selectedOpt.getAttribute('data-lon');
+            const capitalName = selectedOpt.getAttribute('data-capital');
+
+            statusLabel.textContent = "Fetching...";
+            headlineSelect.innerHTML = '<option value="">Loading headlines...</option>';
+            
+            fetchWeather(lat, lon, capitalName);
+
+            let rssUrl = "";
+
+            if (keywordMap[category]) {
+                const queryStr = keywordMap[category].slice(0, 6).map(k => `"${k}"`).join(" OR ");
+                rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryStr)}&hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            } else if (category !== 'all') {
+                rssUrl = `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            } else {
+                rssUrl = `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
+            }
+
+            try {
+                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+                const data = await res.json();
+                if (data.status === 'ok' && data.items && data.items.length > 0) {
+                    fetchedArticles = data.items;
+                    headlineSelect.innerHTML = '';
+                    
+                    fetchedArticles.forEach((item, index) => {
+                        const opt = document.createElement('option');
+                        opt.value = index;
+                        opt.textContent = item.title.replace(/ - [^-]+$/, '');
+                        headlineSelect.appendChild(opt);
+                    });
+
+                    statusLabel.textContent = "Connected ✔";
+                    handleHeadlineChange();
+                } else {
+                    throw new Error("No items returned");
+                }
+            } catch (err) {
+                statusLabel.textContent = "Fallback Active";
+                useFallbackNews();
+            }
+        }
+
+        async function fetchWeather(lat, lon, capital) {
+            const weatherEl = document.getElementById('country-weather');
+            document.getElementById('country-location').textContent = `📍 Location: ${capital}`;
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m`);
+                const data = await res.json();
+                if (data.current) {
+                    weatherEl.textContent = `🌤️ ${data.current.temperature_2m}°C, Wind ${data.current.wind_speed_10m} km/h`;
+                }
+            } catch (e) {
+                weatherEl.textContent = `🌤️ Climate: Active`;
+            }
+        }
+
+        function handleHeadlineChange() {
+            const headlineSelect = document.getElementById('headlineSelect');
+            const snippetBox = document.getElementById('news-snippet-text');
+            const themeInput = document.getElementById('theme');
+            const sourceLink = document.getElementById('source-link');
+            
+            const idx = headlineSelect.value;
+            if (idx === "" || !fetchedArticles[idx]) return;
+
+            const article = fetchedArticles[idx];
+            const cleanTitle = article.title.replace(/ - [^-]+$/, '');
+            const rawDescription = article.description || article.content || cleanTitle;
+            const cleanSnippet = rawDescription.replace(/<[^>]*>?/gm, '');
+
+            snippetBox.textContent = cleanSnippet.length > 150 ? cleanSnippet.substring(0, 150) + "..." : cleanSnippet;
+            
+            if (article.link) {
+                sourceLink.href = article.link;
+                sourceLink.classList.remove('disabled');
+            }
+
+            themeInput.value = `A scenic postcard showing ${cleanTitle}, high quality photo, vibrant colors`;
+        }
+
+        function toggleImageSourceMode() {
+            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
+            document.getElementById('aiPromptGroup').classList.toggle('hidden', !isAi);
+            document.getElementById('deviceUploadGroup').classList.toggle('hidden', isAi);
+            document.getElementById('theme').required = isAi;
+            document.getElementById('imageFileInput').required = !isAi;
+        }
+
+        function handleDeviceFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => { loadedUserImage = img; };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                loadedUserImage = null;
+            }
+        }
+
+        function processPhotoToArt(style) {
+            const canvas = document.getElementById('artCanvas');
+            const ctx = canvas.getContext('2d');
+            const maxDim = 800;
+            let width = loadedUserImage.width;
+            let height = loadedUserImage.height;
+
+            if (width > maxDim || height > maxDim) {
+                if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+                else { width = Math.round((width * maxDim) / height); height = maxDim; }
+            }
+
+            canvas.width = width; canvas.height = height;
+            ctx.filter = style === 'ghibli' ? 'saturate(180%) contrast(115%) sepia(15%)' : 
+                        style === 'posterize' ? 'saturate(200%) contrast(140%)' :
+                        style === 'sketch' ? 'grayscale(100%) contrast(200%)' : 'none';
+            ctx.drawImage(loadedUserImage, 0, 0, width, height);
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        function useFallbackNews() {
+            fetchedArticles = [{ title: "Global Materials processing milestone achieved", description: "Strategic investment accelerates sustainable infrastructure transformation.", link: "https://news.google.com" }];
+            const headlineSelect = document.getElementById('headlineSelect');
+            headlineSelect.innerHTML = '<option value="0">Global Materials processing milestone achieved</option>';
+            handleHeadlineChange();
+        }
+
+        function generatePostcardVisual(e) {
+            e.preventDefault();
+            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
+            const imgEl = document.getElementById('generated-image');
+            const status = document.getElementById('status-message');
+
+            status.textContent = '🎨 Rendering visual...';
+            document.getElementById('preview-section').classList.add('hidden');
+
+            if (isAi) {
+                const prompt = document.getElementById('theme').value;
+                const seed = Math.floor(Math.random() * 1000000);
+                imgEl.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=384&seed=${seed}&nologo=true`;
+                imgEl.onload = () => {
+                    status.textContent = '';
+                    document.getElementById('preview-section').classList.remove('hidden');
+                };
+            } else {
+                if (!loadedUserImage) {
+                    status.textContent = '❌ Please select an image first.';
+                    return;
+                }
+                const resultDataUrl = processPhotoToArt(document.getElementById('artStyleSelect').value);
+                imgEl.src = resultDataUrl;
+                imgEl.onload = () => {
+                    status.textContent = '';
+                    document.getElementById('preview-section').classList.remove('hidden');
+                };
+            }
+        }
+
+        // Send Form Handlers (Kept from original design)
+        function updateSendFormUI() {
+            const checkEmail = document.getElementById('checkEmail');
+            const checkText = document.getElementById('checkText');
+            const checkWhatsapp = document.getElementById('checkWhatsapp');
+            
+            document.getElementById('emailGroup').classList.toggle('hidden', !checkEmail.checked);
+            document.getElementById('phoneGroup').classList.toggle('hidden', !checkText.checked);
+            document.getElementById('whatsappGroup').classList.toggle('hidden', !checkWhatsapp.checked);
+            
+            document.getElementById('email').required = checkEmail.checked;
+            document.getElementById('phone').required = checkText.checked;
+            document.getElementById('whatsappPhone').required = checkWhatsapp.checked;
+        }
+
+        // Global functions needed by inline HTML handlers
+        window.updateSendFormUI = updateSendFormUI;
+        window.handleDeviceFileSelect = handleDeviceFileSelect;
+        window.toggleImageSourceMode = toggleImageSourceMode;
+        window.fetchLiveCountryNews = fetchLiveCountryNews;
+        window.handleHeadlineChange = handleHeadlineChange;
+        window.generatePostcardVisual = generatePostcardVisual;
+
     </script>
 
     <style>
@@ -182,6 +421,7 @@
             min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
         }
 
+        /* --- GATEWAY OVERLAY & MODALS --- */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); display: flex; justify-content: center;
@@ -191,31 +431,52 @@
 
         .modal-card {
             background: #fff; padding: 30px; border-radius: 12px;
-            max-width: 850px; width: 100%; max-height: 90vh; overflow-y: auto;
+            max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
             text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
+
+        .modal-card h2 { color: var(--accent-gold); margin-top: 0; }
 
         .auth-toggle-btns { display: flex; gap: 10px; margin-bottom: 20px; }
         .auth-toggle-btns button { flex: 1; background: #e2e8f0; color: #333; }
 
         .form-group { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85em; }
-        input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="file"], textarea {
+        input[type="text"], input[type="email"], input[type="password"], input[type="tel"], textarea {
             width: 100%; padding: 10px; border: 1px solid #ddd;
             border-radius: 6px; box-sizing: border-box; font-size: 0.9em;
         }
+        textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 
-        button {
+        button, .pay-btn {
             width: 100%; background-color: var(--primary-color); color: #333;
             border: none; padding: 12px; font-size: 0.95em; font-weight: bold;
             border-radius: 6px; cursor: pointer; transition: background-color 0.3s;
+            text-decoration: none; display: inline-block; box-sizing: border-box; text-align: center;
         }
-        button:hover { background-color: var(--primary-hover); }
+        button:hover, .pay-btn:hover { background-color: var(--primary-hover); }
 
-        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 15px; margin-top: 20px; }
-        .pricing-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+        /* --- PRICING TIERS SECTION --- */
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .pricing-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
         .pricing-card.featured { border: 2px solid var(--accent-gold); background: #fffdf5; }
 
+        .badge {
+            position: absolute; top: -12px; right: 20px;
+            background: var(--accent-gold); color: #fff; font-size: 0.7em;
+            font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;
+        }
+
+        .plan-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; color: #2c3e50; }
+        .plan-price { font-size: 2em; font-weight: bold; color: #117a65; margin-bottom: 12px; }
+        .plan-price span { font-size: 0.45em; color: #7f8c8d; font-weight: normal; }
+        .plan-features { list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 0.85em; }
+        .plan-features li { padding: 6px 0; border-bottom: 1px solid #f1f1f1; display: flex; align-items: center; gap: 8px; }
+        .plan-features li::before { content: "✓"; color: #27ae60; font-weight: bold; }
+
+        .custom-enquiry-box { display: none; background: #f8f9fa; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: left; }
+
+        /* --- MAIN DASHBOARD --- */
         .container {
             background-color: var(--card-bg); padding: 30px 40px; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 680px; text-align: center;
@@ -232,15 +493,24 @@
         .btn-secondary { background-color: #7f8c8d; color: #fff; margin-bottom: 8px; }
 
         .news-box { background: #f4fbf7; border: 1px solid #d4efdf; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: left; }
+        .news-header { font-size: 0.75em; font-weight: bold; color: #27ae60; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        select { width: 100%; padding: 8px; border: 1px solid #a3e4d7; border-radius: 6px; font-size: 0.85em; }
+        select { width: 100%; padding: 8px; border: 1px solid #a3e4d7; border-radius: 6px; font-size: 0.85em; color: var(--accent-green); }
 
         .location-weather-badge { display: flex; justify-content: space-between; background: #e8f8f5; padding: 6px 10px; border-radius: 6px; font-size: 0.8em; color: var(--accent-green); margin-top: 10px; }
         .news-snippet { font-size: 0.85em; color: #555; margin-top: 8px; font-style: italic; }
+        .source-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em; font-weight: bold; color: var(--accent-green); background-color: #d4efdf; padding: 6px 12px; border-radius: 4px; text-decoration: none; width: auto; }
+        .source-btn.disabled { opacity: 0.5; pointer-events: none; }
 
         .image-mode-toggle { display: flex; justify-content: center; gap: 15px; background: #fafafa; padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; }
+        .image-mode-toggle label { font-size: 0.85em; font-weight: bold; cursor: pointer; margin: 0; display: flex; align-items: center; gap: 5px; }
+        
+        #preview-section { margin-top: 30px; padding-top: 30px; border-top: 2px dashed #ddd; }
         .postcard-preview { background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin-bottom: 25px; }
-        .postcard-preview img { width: 100%; height: auto; min-height: 250px; object-fit: cover; }
+        .postcard-preview img { width: 100%; height: auto; display: block; min-height: 250px; object-fit: cover; }
+        
+        .checkbox-group { display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px; background: #fffdf5; padding: 12px; border-radius: 8px; border: 1px solid #f2e29e; }
+        .checkbox-group label { display: flex; align-items: center; font-weight: bold; cursor: pointer; margin: 0; font-size: 0.85em; }
 
         .hidden { display: none !important; }
         #status-message { margin-top: 15px; font-weight: bold; }
@@ -248,6 +518,7 @@
 </head>
 <body>
 
+    <!-- STEP 1: AUTHENTICATION MODAL -->
     <div id="authOverlay" class="overlay">
         <div class="modal-card" style="max-width: 400px;">
             <div class="auth-toggle-btns">
@@ -291,61 +562,128 @@
         </div>
     </div>
 
+    <!-- STEP 2: SUBSCRIPTION PLAN OVERLAY -->
     <div id="pricingOverlay" class="overlay hidden">
         <div class="modal-card">
-            <h2>Select Membership Plan</h2>
+            <h2>Select Your Membership Plan</h2>
+            <p style="font-size: 0.85em; color: #666; margin-bottom:20px;">Choose a tier below to unlock live trend feeds and postcard creation.</p>
+
             <div class="pricing-grid">
+                <!-- Tier 1 -->
                 <div class="pricing-card">
-                    <h3>Free Trial</h3>
-                    <p>$0 / 1st month</p>
-                    <button onclick="activateSubscriptionInDB('Free Trial')">Select Trial</button>
+                    <div>
+                        <div class="plan-title">1-Month Free Trial</div>
+                        <div class="plan-price">$0 <span>/ 1st month</span></div>
+                        <ul class="plan-features">
+                            <li>70% Usage Capacity</li>
+                            <li>Access to Live Trends News</li>
+                            <li>Standard AI Image Generation</li>
+                            <li>Device Photo Upload Filters</li>
+                        </ul>
+                    </div>
+                    <button onclick="activateSubscriptionInDB('Free Trial')" style="background-color: #e2e8f0; color: #333;">Start 1 Month Free</button>
                 </div>
+
+                <!-- Tier 2 -->
                 <div class="pricing-card featured">
-                    <h3>Full Version</h3>
-                    <p>$2 / month</p>
-                    <button onclick="redirectToStripe('Full Version', 'https://buy.stripe.com/28EeVcbHKbZl7WM2uqbMQ01')">Pay $2/mo Card</button>
+                    <div class="badge">Most Popular</div>
+                    <div>
+                        <div class="plan-title">Full Version</div>
+                        <div class="plan-price">$2 <span>/ month</span></div>
+                        <ul class="plan-features">
+                            <li>100% Full Usage Capacity</li>
+                            <li>Unlimited Postcard Generation</li>
+                            <li>High-Resolution AI Rendering</li>
+                            <li>Direct Email, SMS & WhatsApp Sending</li>
+                            <li>Priority News Feed Sync</li>
+                        </ul>
+                    </div>
+                    <button onclick="redirectToStripe('tier2')" class="pay-btn">Subscribe for $2/mo</button>
                 </div>
+
+                <!-- Tier 3 -->
                 <div class="pricing-card">
-                    <h3>Custom Pro</h3>
-                    <p>$5 / month</p>
-                    <button onclick="redirectToStripe('Custom Pro', 'https://buy.stripe.com/aFabJ01365AX3Gw0mibMQ00')">Pay $5/mo Card</button>
+                    <div>
+                        <div class="plan-title">Custom Pro</div>
+                        <div class="plan-price">$5 <span>/ month</span></div>
+                        <ul class="plan-features">
+                            <li>Full Version Included</li>
+                            <li>Unlimited Monthly Generation</li>
+                            <li>Tailor-made features for your workflow</li>
+                            <li>Direct Bespoke Customization Request</li>
+                            <li>Dedicated Priority Support</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <button onclick="redirectToStripe('tier3')" class="pay-btn" style="margin-bottom: 10px; background-color: #117a65; color: #fff;">Subscribe for $5/mo</button>
+                        <button onclick="toggleCustomEnquiry()" style="background-color: #f4f7f6; color: #117a65; border: 1px solid #117a65;">Submit Request</button>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Custom Enquiry Form (Tier 3) -->
+            <div id="customEnquiryBox" class="custom-enquiry-box">
+                <h4 style="margin-top: 0; color: #117a65;">Custom Requirements Request</h4>
+                <p style="font-size: 0.85em;">Tell us about the specific custom features or branding integrations you require:</p>
+                <form id="customEnquiryForm">
+                    <div class="form-group">
+                        <label>Requirements Details:</label>
+                        <textarea id="custDetails" placeholder="E.g., Branded templates, CRM integration..." required></textarea>
+                    </div>
+                    <button type="submit" style="background-color: #117a65; color: #fff;">Submit Enquiry</button>
+                </form>
             </div>
         </div>
     </div>
 
+    <!-- MAIN DASHBOARD -->
     <div class="container">
         <div class="user-status-bar">
-            <span id="user-display-name">👤 User: Loading...</span>
-            <span id="user-plan-badge">Plan: Loading...</span>
-            <button onclick="toggleSettingsMenu()" style="width:auto; padding:6px 12px; font-size:0.8em;">⚙️ Settings</button>
+            <span id="user-display-name">👤 User: Guest</span>
+            <span id="user-plan-badge">Plan: Inactive</span>
+            <button onclick="toggleSettingsMenu()" style="width: auto; padding: 6px 12px; font-size: 0.8em;">⚙️ Settings</button>
         </div>
 
         <div id="accountSettingsMenu" class="danger-zone hidden">
-            <h4 style="margin-top:0; color:#721c24;">Account Controls</h4>
+            <h4 style="margin-top:0; color:#721c24;">Account Management</h4>
             <button onclick="handleLogout()" class="btn-secondary">Log Out</button>
             <button onclick="deactivateAccount()" class="btn-secondary" style="background:#e67e22;">Deactivate Account</button>
-            <button onclick="deleteAccountPermanently()" class="btn-danger">Delete Database Profile</button>
+            <button onclick="deleteAccountPermanently()" class="btn-danger">Permanently Delete Account & Data</button>
         </div>
 
         <h2>AI Postcard Creator</h2>
 
+        <!-- Expanded Live News Feed from reference code -->
         <div class="news-box">
-            <div style="font-size:0.8em; font-weight:bold; color:#117a65; margin-bottom:8px;">📰 Live Country News Feeds</div>
+            <div class="news-header">
+                <span>📰 Live Categorized News Stream</span>
+                <span id="news-status">Ready</span>
+            </div>
+            
             <div class="filter-grid">
-                <div>
-                    <label>Country:</label>
+                <div class="select-group">
+                    <label>1. Choose Country:</label>
                     <select id="countrySelect" onchange="fetchLiveCountryNews()">
                         <option value="au" data-lat="-35.2809" data-lon="149.1300" data-capital="Canberra, Australia">Australia 🇦🇺</option>
                         <option value="us" data-lat="38.8951" data-lon="-77.0364" data-capital="Washington D.C., USA">USA 🇺🇸</option>
                         <option value="gb" data-lat="51.5074" data-lon="-0.1278" data-capital="London, UK">UK 🇬🇧</option>
                         <option value="ca" data-lat="45.4215" data-lon="-75.6972" data-capital="Ottawa, Canada">Canada 🇨🇦</option>
+                        <option value="in" data-lat="28.6139" data-lon="77.2090" data-capital="New Delhi, India">India 🇮🇳</option>
+                        <option value="jp" data-lat="35.6762" data-lon="139.6503" data-capital="Tokyo, Japan">Japan 🇯🇵</option>
+                        <option value="de" data-lat="52.5200" data-lon="13.4050" data-capital="Berlin, Germany">Germany 🇩🇪</option>
+                        <option value="fr" data-lat="48.8566" data-lon="2.3522" data-capital="Paris, France">France 🇫🇷</option>
                     </select>
                 </div>
-                <div>
-                    <label>Category:</label>
+
+                <div class="select-group">
+                    <label>2. Trend Category:</label>
                     <select id="categorySelect" onchange="fetchLiveCountryNews()">
                         <option value="all">🔥 Top Trends</option>
+                        <option value="SUPPLY_CHAIN">📦 Supply Chain</option>
+                        <option value="MANUFACTURING">🏭 Manufacturing</option>
+                        <option value="RARE_EARTH">💎 Rare Earth/Minerals</option>
+                        <option value="MATERIALS">🧱 Materials & Commodities</option>
+                        <option value="ECO">🌱 Environment</option>
                         <option value="TECHNOLOGY">💻 Technology</option>
                         <option value="BUSINESS">📈 Business</option>
                         <option value="SCIENCE">🔬 Science</option>
@@ -353,22 +691,25 @@
                 </div>
             </div>
 
-            <label style="font-size:0.8em;">Select Headline:</label>
-            <select id="headlineSelect" onchange="handleHeadlineChange()"></select>
+            <div class="form-group">
+                <label>3. Select Headline:</label>
+                <select id="headlineSelect" onchange="handleHeadlineChange()"></select>
+            </div>
 
             <div class="location-weather-badge">
                 <span id="country-location">📍 Location: ...</span>
                 <span id="country-weather">🌤️ Weather: ...</span>
             </div>
-            <div class="news-snippet" id="news-snippet-text">Loading headlines...</div>
+            <div class="news-snippet" id="news-snippet-text">Loading news feed...</div>
+            <div style="text-align:right; margin-top:10px;"><a id="source-link" href="#" target="_blank" class="source-btn disabled">Read Source Article</a></div>
         </div>
 
         <div class="image-mode-toggle">
-            <label><input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleMode()"> 🎨 AI News Postcard</label>
-            <label><input type="radio" name="imageSourceMode" value="upload" onchange="toggleMode()"> 🖼️ Device Upload</label>
+            <label><input type="radio" name="imageSourceMode" value="ai" checked onchange="toggleImageSourceMode()"> 🎨 News visual</label>
+            <label><input type="radio" name="imageSourceMode" value="upload" onchange="toggleImageSourceMode()"> 🖼️ Device Upload</label>
         </div>
 
-        <form id="generateForm" onsubmit="generatePostcard(event)">
+        <form onsubmit="generatePostcardVisual(event)">
             <div class="form-group" id="aiPromptGroup">
                 <label>Postcard Style Prompt</label>
                 <input type="text" id="theme" required>
@@ -376,142 +717,53 @@
 
             <div class="form-group hidden" id="deviceUploadGroup">
                 <label>Select Photo</label>
-                <input type="file" id="imageFileInput" accept="image/*" onchange="handleFileSelect(event)">
+                <input type="file" id="imageFileInput" accept="image/*" onchange="handleDeviceFileSelect(event)">
                 <label style="margin-top:8px;">Style Filter:</label>
                 <select id="artStyleSelect">
                     <option value="original">📷 Original Photo</option>
                     <option value="ghibli">🌸 Ghibli Anime Filter</option>
                     <option value="posterize">🎨 Posterized Pop Art</option>
+                    <option value="sketch">✏️ Hand Sketch</option>
+                    <option value="oil">🖌️ Oil Painting</option>
                 </select>
             </div>
-
-            <button type="submit" id="generateBtn">Generate Visual</button>
+            <button type="submit">Generate Visual</button>
         </form>
 
         <div id="status-message"></div>
         <canvas id="artCanvas" style="display:none;"></canvas>
 
-        <div id="preview-section" class="hidden" style="margin-top:20px;">
-            <h3>Postcard Preview</h3>
+        <div id="preview-section" class="hidden">
+            <h3>Your Postcard Visual</h3>
             <div class="postcard-preview">
-                <img id="generated-image" src="" alt="Postcard Visual">
+                <img id="generated-image" src="" alt="Visual">
             </div>
+
+            <!-- Sending form layout from initial design -->
+            <p style="margin-bottom: 15px; font-weight: bold;">How would you like to share this?</p>
+            <form id="sendForm">
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="checkEmail" checked onchange="updateSendFormUI()"> 📧 Email</label>
+                    <label><input type="checkbox" id="checkText" onchange="updateSendFormUI()"> 📱 SMS</label>
+                    <label><input type="checkbox" id="checkWhatsapp" onchange="updateSendFormUI()"> 💬 WhatsApp</label>
+                </div>
+
+                <div class="form-group" id="emailGroup">
+                    <label>Recipient's Email</label>
+                    <input type="email" id="email" placeholder="friend@example.com">
+                </div>
+                <div class="form-group hidden" id="phoneGroup">
+                    <label>Recipient's Phone (SMS)</label>
+                    <input type="tel" id="phone" placeholder="e.g. 0412 345 678">
+                </div>
+                <div class="form-group hidden" id="whatsappGroup">
+                    <label>Recipient's WhatsApp</label>
+                    <input type="tel" id="whatsappPhone" placeholder="e.g. +61412345678">
+                </div>
+                <button type="submit">Send Postcard</button>
+            </form>
         </div>
     </div>
 
-    <script>
-        let fetchedArticles = [];
-        let loadedUserImage = null;
-
-        async function fetchLiveCountryNews() {
-            const countrySelect = document.getElementById('countrySelect');
-            const categorySelect = document.getElementById('categorySelect');
-            const headlineSelect = document.getElementById('headlineSelect');
-            const selectedOpt = countrySelect.options[countrySelect.selectedIndex];
-
-            const countryCode = countrySelect.value;
-            const category = categorySelect.value;
-            
-            fetchWeather(selectedOpt.getAttribute('data-lat'), selectedOpt.getAttribute('data-lon'), selectedOpt.getAttribute('data-capital'));
-
-            let rssUrl = category !== 'all' 
-                ? `https://news.google.com/rss/headlines/section/topic/${category}?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`
-                : `https://news.google.com/rss?hl=en-${countryCode}&gl=${countryCode.toUpperCase()}&ceid=${countryCode.toUpperCase()}:en`;
-
-            try {
-                const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-                const data = await res.json();
-                if (data.status === 'ok' && data.items.length > 0) {
-                    fetchedArticles = data.items;
-                    headlineSelect.innerHTML = '';
-                    fetchedArticles.forEach((item, idx) => {
-                        const opt = document.createElement('option');
-                        opt.value = idx;
-                        opt.textContent = item.title.replace(/ - [^-]+$/, '');
-                        headlineSelect.appendChild(opt);
-                    });
-                    handleHeadlineChange();
-                }
-            } catch (e) {
-                document.getElementById('news-snippet-text').textContent = "Unable to fetch live feeds right now.";
-            }
-        }
-
-        async function fetchWeather(lat, lon, capital) {
-            document.getElementById('country-location').textContent = `📍 ${capital}`;
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m`);
-                const data = await res.json();
-                document.getElementById('country-weather').textContent = `🌤️ ${data.current.temperature_2m}°C`;
-            } catch (e) {
-                document.getElementById('country-weather').textContent = `🌤️ Live`;
-            }
-        }
-
-        function handleHeadlineChange() {
-            const idx = document.getElementById('headlineSelect').value;
-            if (idx === "" || !fetchedArticles[idx]) return;
-            const item = fetchedArticles[idx];
-            const cleanTitle = item.title.replace(/ - [^-]+$/, '');
-            document.getElementById('news-snippet-text').textContent = item.description.replace(/<[^>]*>?/gm, '');
-            document.getElementById('theme').value = `Scenic artistic postcard of ${cleanTitle}, high resolution photorealistic visual`;
-        }
-
-        function toggleMode() {
-            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
-            document.getElementById('aiPromptGroup').classList.toggle('hidden', !isAi);
-            document.getElementById('deviceUploadGroup').classList.toggle('hidden', isAi);
-            document.getElementById('theme').required = isAi;
-        }
-
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const img = new Image();
-                    img.onload = () => { loadedUserImage = img; };
-                    img.src = evt.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function generatePostcard(e) {
-            e.preventDefault();
-            const isAi = document.querySelector('input[name="imageSourceMode"]:checked').value === 'ai';
-            const imgEl = document.getElementById('generated-image');
-            const status = document.getElementById('status-message');
-
-            status.textContent = '🎨 Rendering Postcard...';
-
-            if (isAi) {
-                const prompt = document.getElementById('theme').value;
-                const seed = Math.floor(Math.random() * 999999);
-                imgEl.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=384&seed=${seed}&nologo=true`;
-                imgEl.onload = () => {
-                    status.textContent = '';
-                    document.getElementById('preview-section').classList.remove('hidden');
-                };
-            } else {
-                if (!loadedUserImage) {
-                    status.textContent = '❌ Please select an image first.';
-                    return;
-                }
-                const canvas = document.getElementById('artCanvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 512; canvas.height = 384;
-                
-                const style = document.getElementById('artStyleSelect').value;
-                ctx.filter = style === 'ghibli' ? 'saturate(180%) contrast(115%)' : 
-                            style === 'posterize' ? 'saturate(200%) contrast(140%)' : 'none';
-                
-                ctx.drawImage(loadedUserImage, 0, 0, 512, 384);
-                imgEl.src = canvas.toDataURL('image/jpeg');
-                status.textContent = '';
-                document.getElementById('preview-section').classList.remove('hidden');
-            }
-        }
-    </script>
 </body>
 </html>
