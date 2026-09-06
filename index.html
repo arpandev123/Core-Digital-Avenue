@@ -57,7 +57,7 @@
         .modal-card h2 { color: var(--accent-gold); margin-top: 0; }
 
         .auth-toggle-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        .auth-toggle-btns button { flex: 1; background: #e2e8f0; color: #333; }
+        .auth-toggle-btns button { flex: 1; background: #e2e8f0; color: #333; cursor: pointer; }
 
         .form-group { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85em; }
@@ -140,15 +140,15 @@
     <!-- INITIAL INITIALIZATION LOADER -->
     <div id="appLoader">
         <div class="spinner"></div>
-        <p style="margin-top:15px; font-size:0.9em; color:#666;">Initializing Application...</p>
+        <p style="margin-top:15px; font-size:0.9em; color:#666;">Loading Application...</p>
     </div>
 
     <!-- AUTHENTICATION MODAL -->
-    <div id="authOverlay" class="overlay hidden">
+    <div id="authOverlay" class="overlay">
         <div class="modal-card" style="max-width: 400px;">
             <div class="auth-toggle-btns">
-                <button onclick="showTab('login')">Sign In</button>
-                <button onclick="showTab('signup')">Create Account</button>
+                <button type="button" onclick="showTab('login')">Sign In</button>
+                <button type="button" onclick="showTab('signup')">Create Account</button>
             </div>
 
             <div id="loginTab">
@@ -451,7 +451,7 @@
             document.querySelector('.container').classList.remove('hidden');
         }
 
-        // AUTH OBSERVER (Fixed state logic)
+        // AUTH OBSERVER (Ensures modal pops up when unauthenticated)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -479,12 +479,12 @@
                             fetchLiveCountryNews();
                         }
                     } else {
-                        // User created in Auth but has no Firestore profile yet
+                        // User created in Auth but missing Firestore document
                         showPricingModal();
                     }
                 } catch (err) {
                     console.error("Auth state update error:", err);
-                    showPricingModal();
+                    showAuthModal();
                 }
             } else {
                 currentUser = null;
@@ -493,6 +493,11 @@
         });
 
         // USER ACTIONS
+        window.showTab = (tab) => {
+            document.getElementById('loginTab').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('signUpTab').classList.toggle('hidden', tab !== 'signup');
+        };
+
         window.handleSignUp = async (e) => {
             e.preventDefault();
             const name = document.getElementById('signUpName').value;
@@ -574,11 +579,6 @@
                 return;
             }
             window.location.href = link;
-        };
-
-        window.showTab = (tab) => {
-            document.getElementById('loginTab').classList.toggle('hidden', tab !== 'login');
-            document.getElementById('signUpTab').classList.toggle('hidden', tab !== 'signup');
         };
 
         window.toggleSettingsMenu = () => {
@@ -777,7 +777,6 @@
             document.getElementById('whatsappPhone').required = checkWhatsapp.checked;
         }
 
-        window.showTab = showTab;
         window.showAuthModal = showAuthModal;
         window.showPricingModal = showPricingModal;
         window.showMainApp = showMainApp;
